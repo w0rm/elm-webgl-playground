@@ -29,12 +29,12 @@ mesh : GL.Drawable Vertex
 mesh =
   GL.Triangle
     [ ( Vertex (vec2 0 0)
-      , Vertex (vec2 1 1)
-      , Vertex (vec2 1 0)
+      , Vertex (vec2 64 128)
+      , Vertex (vec2 64 0)
       )
     , ( Vertex (vec2 0 0)
-      , Vertex (vec2 0 1)
-      , Vertex (vec2 1 1)
+      , Vertex (vec2 0 128)
+      , Vertex (vec2 64 128)
       )
     ]
 
@@ -47,49 +47,47 @@ ortho2D w h =
 view : (Int, Int) -> Maybe GL.Texture -> Element
 view (w, h) maybeTexture =
   GL.webgl
-    (500, 500)
+    (1024, 1024)
     ( case maybeTexture of
         Nothing ->
           []
         Just texture ->
-          render (w, h) texture
+          render (1024, 1024) texture
     )
 
 
 render : (Int, Int) -> GL.Texture -> List GL.Renderable
 render (w, h) texture =
-  let
-    matrix = Mat4.makeOrtho2D 0 1 1 0 -- left right bottom top
-  in
-    [GL.render vertexShader fragmentShader mesh {mat = matrix, sprite = texture}]
+  [GL.render vertexShader fragmentShader mesh {resolution = vec2 (toFloat w) (toFloat h), sprite = texture}]
 
 
 -- Shaders
 
-vertexShader : GL.Shader {attr | position : Vec2} {unif | mat : Mat4.Mat4} {pos : Vec2}
+vertexShader : GL.Shader {attr | position : Vec2} {unif | resolution : Vec2} {texturePos : Vec2}
 vertexShader = [glsl|
 
 attribute vec2 position;
-uniform mat4 mat;
-varying vec2 pos;
+uniform vec2 resolution;
+varying vec2 texturePos;
 
 void main () {
-    gl_Position = mat * vec4(position, 0.0, 1.0);
-    pos = position;
+  vec2 clipSpace = position / resolution * 2.0 - 1.0;
+  gl_Position = vec4(clipSpace.x, -clipSpace.y, 0, 1);
+  texturePos = vec2(clipSpace.x, -clipSpace.y);
 }
 
 |]
 
 
-fragmentShader : GL.Shader {} {u | sprite : GL.Texture } {pos : Vec2}
+fragmentShader : GL.Shader {} {u | sprite : GL.Texture } {texturePos : Vec2}
 fragmentShader = [glsl|
 
 precision mediump float;
 uniform sampler2D sprite;
-varying vec2 pos;
+varying vec2 texturePos;
 
 void main () {
-  gl_FragColor = texture2D(sprite, vec2(pos.x, -pos.y));
+  gl_FragColor = texture2D(sprite, texturePos);
 }
 
 |]
