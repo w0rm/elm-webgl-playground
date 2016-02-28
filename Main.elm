@@ -48,7 +48,6 @@ view : (Int, Int) -> (Int, Int) -> Int -> Maybe GL.Texture -> Element
 view dimensions position frame maybeTexture =
   GL.webglWithConfig
     [ GL.Enable GL.Blend
-    , GL.Disable GL.DepthTest
     , GL.BlendFunc (GL.SrcAlpha, GL.OneMinusSrcAlpha)
     ]
     dimensions
@@ -68,7 +67,7 @@ render (w, h) (x, y) frame texture =
       mesh
       { screenSize = vec2 (toFloat w) (toFloat h)
       , offset = vec2 (toFloat x) (toFloat y)
-      , sprite = texture
+      , texture = texture
       , frame = frame
       , textureSize = vec2 (toFloat (fst (GL.textureSize texture))) (toFloat (snd (GL.textureSize texture)))
       , frameSize = vec2 128 256
@@ -95,11 +94,11 @@ void main () {
 |]
 
 
-fragmentShader : GL.Shader {} {u | sprite : GL.Texture, textureSize : Vec2, frameSize : Vec2, frame : Int } {texturePos : Vec2}
+fragmentShader : GL.Shader {} {u | texture : GL.Texture, textureSize : Vec2, frameSize : Vec2, frame : Int } {texturePos : Vec2}
 fragmentShader = [glsl|
 
 precision mediump float;
-uniform sampler2D sprite;
+uniform sampler2D texture;
 uniform vec2 textureSize;
 uniform vec2 frameSize;
 uniform int frame;
@@ -110,7 +109,7 @@ void main () {
   int frames = int(1.0 / size.x);
   vec2 frameOffset = size * vec2(float(frame - frame / frames * frames), -float(frame / frames));
   vec2 textureClipSpace = texturePos / textureSize * 2.0 - 1.0;
-  gl_FragColor = texture2D(sprite, vec2(textureClipSpace.x, -textureClipSpace.y) + frameOffset);
+  gl_FragColor = texture2D(texture, vec2(textureClipSpace.x, -textureClipSpace.y) + frameOffset);
 }
 
 |]
