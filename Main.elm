@@ -13,7 +13,7 @@ currentFrame =
 
 main : Signal Element
 main =
-  Signal.map3 view Mouse.position currentFrame texture.signal
+  Signal.map3 (view (500, 500)) Mouse.position currentFrame texture.signal
 
 
 type alias Vertex = { position : Vec2 }
@@ -44,15 +44,15 @@ mesh =
     ]
 
 
-view : (Int, Int) -> Int -> Maybe GL.Texture -> Element
-view (x, y) frame maybeTexture =
+view : (Int, Int) -> (Int, Int) -> Int -> Maybe GL.Texture -> Element
+view dimensions position frame maybeTexture =
   GL.webgl
-    (1024, 1024)
+    dimensions
     ( case maybeTexture of
         Nothing ->
           []
         Just texture ->
-          render (1024, 1024) (x, y) frame texture
+          render dimensions position frame texture
     )
 
 
@@ -62,48 +62,51 @@ render (w, h) (x, y) frame texture =
       vertexShader
       fragmentShader
       mesh
-      { resolution = vec2 (toFloat w) (toFloat h)
+      { screenSize = vec2 (toFloat w) (toFloat h)
       , offset = vec2 (toFloat x) (toFloat y)
       , sprite = texture
       , frame = frame
-      , size = vec2 (128 / toFloat (fst (GL.textureSize texture))) (256 / toFloat (snd (GL.textureSize texture)))
+      , textureSize = vec2 (toFloat (fst (GL.textureSize texture))) (toFloat (snd (GL.textureSize texture)))
+      , frameSize = vec2 128 256
       }
   ]
 
 
 -- Shaders
 
-vertexShader : GL.Shader {attr | position : Vec2} {unif | resolution : Vec2, offset : Vec2} {texturePos : Vec2}
+vertexShader : GL.Shader {attr | position : Vec2} {unif | screenSize : Vec2, offset : Vec2} {texturePos : Vec2}
 vertexShader = [glsl|
 
 attribute vec2 position;
 uniform vec2 offset;
-uniform vec2 resolution;
+uniform vec2 screenSize;
 varying vec2 texturePos;
 
 void main () {
-  vec2 clipSpace = (position + offset) / resolution * 2.0 - 1.0;
+  vec2 clipSpace = (position + offset) / screenSize * 2.0 - 1.0;
   gl_Position = vec4(clipSpace.x, -clipSpace.y, 0, 1);
-  vec2 textureClipSpace = position / resolution * 2.0 - 1.0;
-  texturePos = vec2(textureClipSpace.x, -textureClipSpace.y);
+  texturePos = position;
 }
 
 |]
 
 
-fragmentShader : GL.Shader {} {u | sprite : GL.Texture, size : Vec2, frame : Int } {texturePos : Vec2}
+fragmentShader : GL.Shader {} {u | sprite : GL.Texture, textureSize : Vec2, frameSize : Vec2, frame : Int } {texturePos : Vec2}
 fragmentShader = [glsl|
 
 precision mediump float;
 uniform sampler2D sprite;
-uniform vec2 size;
+uniform vec2 textureSize;
+uniform vec2 frameSize;
 uniform int frame;
 varying vec2 texturePos;
 
 void main () {
+  vec2 size = frameSize / textureSize;
   int frames = int(1.0 / size.x);
   vec2 frameOffset = size * vec2(float(frame - frame / frames * frames), -float(frame / frames));
-  gl_FragColor = texture2D(sprite, texturePos + frameOffset);
+  vec2 textureClipSpace = texturePos / textureSize * 2.0 - 1.0;
+  gl_FragColor = texture2D(sprite, vec2(textureClipSpace.x, -textureClipSpace.y) + frameOffset);
 }
 
 |]
