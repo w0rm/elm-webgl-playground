@@ -46,7 +46,11 @@ mesh =
 
 view : (Int, Int) -> (Int, Int) -> Int -> Maybe GL.Texture -> Element
 view dimensions position frame maybeTexture =
-  GL.webgl
+  GL.webglWithConfig
+    [ GL.Enable GL.Blend
+    , GL.Disable GL.DepthTest
+    , GL.BlendFunc (GL.SrcAlpha, GL.OneMinusSrcAlpha)
+    ]
     dimensions
     ( case maybeTexture of
         Nothing ->
