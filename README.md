@@ -1,9 +1,15 @@
 # elm-webgl-playground
 
-Just trying stuff with Elm and WebGL. 
+I couldn't find any simple example of how to render 2D
+with WebGL and Elm, so I decided to create this myself.
 
-Eventually I want to make it render animated 2d sprites with pixel coordinates. 
+This renders an animated object at the mouse position:
 
-Lets see how far it goes.
+![Demo](screencast.gif)
 
-Disclamer: WebGL noob here
+## Instructions to run
+
+1. Install elm [elm-lang.org/install](http://elm-lang.org/install)
+2. Clone this repo and `cd` into it
+3. Run `elm reactor`
+4. Open `http://localhost:8000/Main.elm` in the browser
