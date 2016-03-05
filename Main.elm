@@ -48,7 +48,7 @@ view : (Int, Int) -> (Int, Int) -> Int -> Maybe GL.Texture -> Element
 view dimensions position frame maybeTexture =
   GL.webglWithConfig
     [ GL.Enable GL.Blend
-    , GL.BlendFunc (GL.SrcAlpha, GL.OneMinusSrcAlpha)
+    , GL.BlendFunc (GL.One, GL.OneMinusSrcAlpha)
     ]
     dimensions
     ( case maybeTexture of
@@ -109,7 +109,9 @@ void main () {
   int frames = int(1.0 / size.x);
   vec2 frameOffset = size * vec2(float(frame - frame / frames * frames), -float(frame / frames));
   vec2 textureClipSpace = texturePos / textureSize * 2.0 - 1.0;
-  gl_FragColor = texture2D(texture, vec2(textureClipSpace.x, -textureClipSpace.y) + frameOffset);
+  vec4 temp = texture2D(texture, vec2(textureClipSpace.x, -textureClipSpace.y) + frameOffset);
+  float a = temp.a;
+  gl_FragColor = vec4(temp.r * a, temp.g * a, temp.b * a, a);
 }
 
 |]
