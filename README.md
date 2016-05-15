@@ -1,5 +1,7 @@
 # elm-webgl-playground
 
+Note: this project uses an old version of Elm 0.16.
+
 I couldn't find any simple example of how to render 2D
 with WebGL and Elm, so I decided to create this myself.
 
