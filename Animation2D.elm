@@ -98,23 +98,6 @@ animate elapsed model =
       }
 
 
-type alias Vertex = { position : Vec2 }
-
-
-mesh : WebGL.Drawable Vertex
-mesh =
-  WebGL.Triangle
-    [ ( Vertex (vec2 0 0)
-      , Vertex (vec2 64 128)
-      , Vertex (vec2 64 0)
-      )
-    , ( Vertex (vec2 0 0)
-      , Vertex (vec2 0 128)
-      , Vertex (vec2 64 128)
-      )
-    ]
-
-
 view : Model -> Html Action
 view {size, maybeTexture, position, frame} =
   WebGL.toHtmlWith
@@ -144,7 +127,25 @@ view {size, maybeTexture, position, frame} =
     )
 
 
-{- Shaders -}
+{- Mesh and shaders -}
+
+
+type alias Vertex = { position : Vec2 }
+
+
+mesh : WebGL.Drawable Vertex
+mesh =
+  WebGL.Triangle
+    [ ( Vertex (vec2 0 0)
+      , Vertex (vec2 64 128)
+      , Vertex (vec2 64 0)
+      )
+    , ( Vertex (vec2 0 0)
+      , Vertex (vec2 0 128)
+      , Vertex (vec2 64 128)
+      )
+    ]
+
 
 vertexShader : WebGL.Shader {attr | position : Vec2} {unif | screenSize : Vec2, offset : Vec2} {texturePos : Vec2}
 vertexShader = [glsl|
