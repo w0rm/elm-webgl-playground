@@ -1,3 +1,5 @@
+module Main exposing (..)
+
 import Mouse
 import WebGL
 import Math.Vector2 exposing (Vec2, vec2)
@@ -6,149 +8,165 @@ import AnimationFrame
 import Window
 import Html.Attributes exposing (width, height, style)
 import Html exposing (Html)
-import Html.App as Html
 import Time exposing (Time)
 
 
-{- Types -}
-
+{-| Types
+-}
 type Action
-  = Resize Window.Size
-  | MouseMove Mouse.Position
-  | Animate Time
-  | TextureLoad WebGL.Texture
-  | TextureError WebGL.Error
+    = Resize Window.Size
+    | MouseMove Mouse.Position
+    | Animate Time
+    | TextureLoad WebGL.Texture
+    | TextureError WebGL.Error
 
 
 type alias Model =
-  { size : Window.Size
-  , position : Mouse.Position
-  , maybeTexture : Maybe WebGL.Texture
-  , elapsed : Time
-  , frame : Int
-  }
-
-
-{- Program -}
-
-main : Program Never
-main =
-  Html.program
-    { init = init
-    , subscriptions = subscriptions
-    , update = update
-    , view = view
+    { size : Window.Size
+    , position : Mouse.Position
+    , maybeTexture : Maybe WebGL.Texture
+    , elapsed : Time
+    , frame : Int
     }
 
 
-init : (Model, Cmd Action)
+{-| Program
+-}
+main : Program Never Model Action
+main =
+    Html.program
+        { init = init
+        , subscriptions = subscriptions
+        , update = update
+        , view = view
+        }
+
+
+init : ( Model, Cmd Action )
 init =
-  { size = Window.Size 0 0
-  , position = Mouse.Position 0 0
-  , maybeTexture = Nothing
-  , elapsed = 0
-  , frame = 0
-  } !
-  [ WebGL.loadTexture "/texture/delivery-person.png" |> Task.perform TextureError TextureLoad
-  , Window.size |> Task.perform Resize Resize
-  ]
+    { size = Window.Size 0 0
+    , position = Mouse.Position 0 0
+    , maybeTexture = Nothing
+    , elapsed = 0
+    , frame = 0
+    }
+        ! [ WebGL.loadTexture "/texture/delivery-person.png"
+                |> Task.attempt
+                    (\result ->
+                        case result of
+                            Err err ->
+                                TextureError err
+
+                            Ok val ->
+                                TextureLoad val
+                    )
+          , Task.perform Resize Window.size
+          ]
 
 
 subscriptions : Model -> Sub Action
 subscriptions _ =
-  Sub.batch
-   [ AnimationFrame.diffs Animate
-   , Mouse.moves MouseMove
-   , Window.resizes Resize
-   ]
+    Sub.batch
+        [ AnimationFrame.diffs Animate
+        , Mouse.moves MouseMove
+        , Window.resizes Resize
+        ]
 
-update : Action -> Model -> (Model, Cmd Action)
+
+update : Action -> Model -> ( Model, Cmd Action )
 update action model =
-  case action of
-    Resize size ->
-      { model | size = size } ! []
+    case action of
+        Resize size ->
+            { model | size = size } ! []
 
-    MouseMove position ->
-      { model | position = position } ! []
+        MouseMove position ->
+            { model | position = position } ! []
 
-    Animate elapsed ->
-      animate elapsed model ! []
+        Animate elapsed ->
+            animate elapsed model ! []
 
-    TextureLoad texture ->
-      { model | maybeTexture = Just texture } ! []
+        TextureLoad texture ->
+            { model | maybeTexture = Just texture } ! []
 
-    TextureError _ ->
-      Debug.crash "Error loading texture"
+        TextureError _ ->
+            Debug.crash "Error loading texture"
 
 
 animate : Time -> Model -> Model
 animate elapsed model =
-  let
-    timeout = 150
-    newElapsed = elapsed + model.elapsed
-  in
-    if newElapsed > timeout then
-      { model
-      | frame = (model.frame + 1) % 24
-      , elapsed = newElapsed - timeout
-      }
-    else
-      { model
-      | elapsed = newElapsed
-      }
+    let
+        timeout =
+            150
+
+        newElapsed =
+            elapsed + model.elapsed
+    in
+        if newElapsed > timeout then
+            { model
+                | frame = (model.frame + 1) % 24
+                , elapsed = newElapsed - timeout
+            }
+        else
+            { model
+                | elapsed = newElapsed
+            }
 
 
 view : Model -> Html Action
-view {size, maybeTexture, position, frame} =
-  WebGL.toHtmlWith
-    [ WebGL.Enable WebGL.Blend
-    , WebGL.BlendFunc (WebGL.One, WebGL.OneMinusSrcAlpha)
-    ]
-    [ width size.width
-    , height size.height
-    , style [("display", "block")]
-    ]
-    ( case maybeTexture of
-        Nothing ->
-          []
-        Just texture ->
-          [ WebGL.render
-              vertexShader
-              fragmentShader
-              mesh
-              { screenSize = vec2 (toFloat size.width) (toFloat size.height)
-              , offset = vec2 (toFloat position.x) (toFloat position.y)
-              , texture = texture
-              , frame = frame
-              , textureSize = vec2 (toFloat (fst (WebGL.textureSize texture))) (toFloat (snd (WebGL.textureSize texture)))
-              , frameSize = vec2 128 256
-              }
-          ]
-    )
+view { size, maybeTexture, position, frame } =
+    WebGL.toHtmlWith
+        [ WebGL.Enable WebGL.Blend
+        , WebGL.BlendFunc ( WebGL.One, WebGL.OneMinusSrcAlpha )
+        ]
+        [ width size.width
+        , height size.height
+        , style [ ( "display", "block" ) ]
+        ]
+        (case maybeTexture of
+            Nothing ->
+                []
+
+            Just texture ->
+                [ WebGL.render
+                    vertexShader
+                    fragmentShader
+                    mesh
+                    { screenSize = vec2 (toFloat size.width) (toFloat size.height)
+                    , offset = vec2 (toFloat position.x) (toFloat position.y)
+                    , texture = texture
+                    , frame = frame
+                    , textureSize = vec2 (toFloat (Tuple.first (WebGL.textureSize texture))) (toFloat (Tuple.second (WebGL.textureSize texture)))
+                    , frameSize = vec2 128 256
+                    }
+                ]
+        )
+
 
 
 {- Mesh and shaders -}
 
 
-type alias Vertex = { position : Vec2 }
+type alias Vertex =
+    { position : Vec2 }
 
 
 mesh : WebGL.Drawable Vertex
 mesh =
-  WebGL.Triangle
-    [ ( Vertex (vec2 0 0)
-      , Vertex (vec2 64 128)
-      , Vertex (vec2 64 0)
-      )
-    , ( Vertex (vec2 0 0)
-      , Vertex (vec2 0 128)
-      , Vertex (vec2 64 128)
-      )
-    ]
+    WebGL.Triangle
+        [ ( Vertex (vec2 0 0)
+          , Vertex (vec2 64 128)
+          , Vertex (vec2 64 0)
+          )
+        , ( Vertex (vec2 0 0)
+          , Vertex (vec2 0 128)
+          , Vertex (vec2 64 128)
+          )
+        ]
 
 
-vertexShader : WebGL.Shader {attr | position : Vec2} {unif | screenSize : Vec2, offset : Vec2} {texturePos : Vec2}
-vertexShader = [glsl|
+vertexShader : WebGL.Shader { attr | position : Vec2 } { unif | screenSize : Vec2, offset : Vec2 } { texturePos : Vec2 }
+vertexShader =
+    [glsl|
 
   attribute vec2 position;
   uniform vec2 offset;
@@ -164,8 +182,9 @@ vertexShader = [glsl|
 |]
 
 
-fragmentShader : WebGL.Shader {} {u | texture : WebGL.Texture, textureSize : Vec2, frameSize : Vec2, frame : Int } {texturePos : Vec2}
-fragmentShader = [glsl|
+fragmentShader : WebGL.Shader {} { u | texture : WebGL.Texture, textureSize : Vec2, frameSize : Vec2, frame : Int } { texturePos : Vec2 }
+fragmentShader =
+    [glsl|
 
   precision mediump float;
   uniform sampler2D texture;
