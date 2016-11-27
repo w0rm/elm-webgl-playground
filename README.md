@@ -1,5 +1,11 @@
 # elm-webgl-playground
 
+## Tangram.elm
+
+Elm tangram pieces in 3D, composing different logos of Elm-related projects.
+
+![Demo](Tangram.gif)
+
 ## Animation2D.elm
 
 I couldn't find any simple example of how to render 2D
