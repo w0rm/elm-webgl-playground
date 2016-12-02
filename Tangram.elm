@@ -76,7 +76,11 @@ view size t =
         WebGL.toHtml
             [ width (size.width * 2)
             , height (size.height * 2)
-            , style [ ( "transform", "scale(0.5)" ), ( "transform-origin", "0 0" ) ]
+            , style
+                [ ( "transform", "scale(0.5)" )
+                , ( "transform-origin", "0 0" )
+                , ( "display", "block" )
+                ]
             ]
             [ render ratio Mesh.parallelepiped colors.green (scaleMat 1) shape.parallelepiped t
             , render ratio Mesh.tetrahedron colors.orange (scaleMat 2) shape.orangeTetrahedron1 t
