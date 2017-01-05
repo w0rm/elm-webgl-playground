@@ -2,12 +2,12 @@ module Tangram.Mesh exposing (tetrahedron, cube, parallelepiped)
 
 import Math.Vector3 exposing (Vec3, vec3, sub, cross)
 import Tangram.Shader exposing (Attribute)
-import WebGL exposing (Drawable(Triangle))
+import WebGL exposing (Mesh)
 
 
-tetrahedron : Drawable Attribute
+tetrahedron : Mesh Attribute
 tetrahedron =
-    Triangle
+    WebGL.triangles
         [ -- front face
           attribute (vec3 0 1 0) (vec3 -1 0 0) (vec3 0 -1 0)
           -- rest faces
@@ -17,9 +17,9 @@ tetrahedron =
         ]
 
 
-cube : Drawable Attribute
+cube : Mesh Attribute
 cube =
-    Triangle
+    WebGL.triangles
         [ -- front face
           attribute (vec3 -1 0 0) (vec3 1 0 0) (vec3 0 1 0)
         , attribute (vec3 -1 0 0) (vec3 0 -1 0) (vec3 1 0 0)
@@ -41,9 +41,9 @@ cube =
         ]
 
 
-parallelepiped : Drawable Attribute
+parallelepiped : Mesh Attribute
 parallelepiped =
-    Triangle
+    WebGL.triangles
         [ -- front face
           attribute (vec3 -3 1 0) (vec3 3 -1 0) (vec3 1 1 0)
         , attribute (vec3 -3 1 0) (vec3 -1 -1 0) (vec3 3 -1 0)

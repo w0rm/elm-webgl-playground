@@ -8,7 +8,7 @@ import Math.Vector3 exposing (Vec3, vec3)
 import Tangram.Mesh as Mesh
 import Tangram.Shader as Shader exposing (Uniform, Varying, Attribute)
 import Tangram.Shape as Shape exposing (Shape, Position)
-import WebGL
+import WebGL exposing (Entity, Mesh)
 import Window
 import Time exposing (Time)
 import Task
@@ -92,9 +92,9 @@ view size t =
             ]
 
 
-render : Float -> WebGL.Drawable Attribute -> Vec3 -> Mat4 -> Position -> Float -> WebGL.Renderable
+render : Float -> Mesh Attribute -> Vec3 -> Mat4 -> Position -> Float -> Entity
 render ratio shape color scaleMat { rotateZ, rotateY, x, y, z } t =
-    WebGL.render
+    WebGL.entity
         Shader.vertex
         Shader.fragment
         shape

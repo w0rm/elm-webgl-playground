@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import WebGL exposing (Drawable(Triangle), Renderable, Shader, toHtml, render)
+import WebGL exposing (Mesh, Shader)
 import Math.Vector3 exposing (Vec3, vec3, add, scale, normalize, length, dot)
 import Math.Matrix4 exposing (Mat4, makeRotate, mul, makeLookAt, makePerspective, inverseOrthonormal, transpose)
 import Random exposing (Generator)
@@ -78,7 +78,7 @@ view { size, angle } =
         , height size.height
         , style [ ( "display", "block" ) ]
         ]
-        [ WebGL.render
+        [ WebGL.entity
             vertexShader
             fragmentShader
             planet
@@ -118,7 +118,7 @@ type alias Varying =
 {- Planet mesh -}
 
 
-planet : Drawable Vertex
+planet : Mesh Vertex
 planet =
     let
         scaleV v =
@@ -139,7 +139,7 @@ planet =
         randomTriangles =
             Random.step (surface 80 triangles) (Random.initialSeed 1) |> Tuple.first
     in
-        Triangle (List.map vec3ToVertex randomTriangles)
+        WebGL.triangles (List.map vec3ToVertex randomTriangles)
 
 
 

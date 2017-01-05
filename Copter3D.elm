@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import WebGL exposing (Drawable(Triangle), Renderable, Shader, toHtml, render)
+import WebGL exposing (Mesh, Shader)
 import Math.Vector3 exposing (Vec3, vec3, add, scale, normalize, length, dot)
 import Math.Matrix4 exposing (Mat4, makeRotate, mul, makeLookAt, makePerspective, inverseOrthonormal, transpose)
 import AnimationFrame
@@ -77,8 +77,8 @@ view { size, angle } =
         , height size.height
         , style [ ( "display", "block" ) ]
         ]
-        [ WebGL.render vertexShader fragmentShader copter (uniforms size (angle / 10))
-        , WebGL.render vertexShader fragmentShader blade (uniforms size (angle / 10 - angle))
+        [ WebGL.entity vertexShader fragmentShader copter (uniforms size (angle / 10))
+        , WebGL.entity vertexShader fragmentShader blade (uniforms size (angle / 10 - angle))
         ]
 
 
@@ -143,9 +143,9 @@ fragmentShader =
 -- Blade
 
 
-blade : Drawable Vertex
+blade : Mesh Vertex
 blade =
-    Triangle
+    WebGL.triangles
         [ ( Vertex (vec3 -13.3833 8.9 -6.7924) (vec3 0.6039 0.6039 0.6118)
           , Vertex (vec3 2.7189 9.0 1.2679) (vec3 0.8588 0.8275 0.8353)
           , Vertex (vec3 -15.8909 9.1 -8.5134) (vec3 0.8588 0.8275 0.8353)
@@ -201,9 +201,9 @@ blade =
 -- Copter
 
 
-copter : Drawable Vertex
+copter : Mesh Vertex
 copter =
-    Triangle
+    WebGL.triangles
         [ ( Vertex (vec3 0.0 -2.6333 13.0) (vec3 0.7451 0.7098 0.7098)
           , Vertex (vec3 0.0 1.8667 7.0) (vec3 0.7725 0.7647 0.7647)
           , Vertex (vec3 1.7 1.8667 7.0) (vec3 0.7804 0.7647 0.7647)

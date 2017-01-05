@@ -1,7 +1,9 @@
 module Main exposing (..)
 
 import Mouse
-import WebGL
+import WebGL exposing (Mesh, Shader)
+import WebGL.Settings.Blend as Blend
+import WebGL.Texture as Texture exposing (Texture, Error)
 import Math.Vector2 exposing (Vec2, vec2)
 import Task exposing (Task)
 import AnimationFrame
@@ -17,8 +19,8 @@ type Action
     = Resize Window.Size
     | MouseMove Mouse.Position
     | Animate Time
-    | TextureLoad WebGL.Texture
-    | TextureError WebGL.Error
+    | TextureLoad Texture
+    | TextureError Error
 
 
 type alias Model =
@@ -50,7 +52,7 @@ init =
     , elapsed = 0
     , frame = 0
     }
-        ! [ WebGL.loadTexture "/texture/delivery-person.png"
+        ! [ Texture.load "/texture/delivery-person.png"
                 |> Task.attempt
                     (\result ->
                         case result of
@@ -114,10 +116,7 @@ animate elapsed model =
 
 view : Model -> Html Action
 view { size, maybeTexture, position, frame } =
-    WebGL.toHtmlWith
-        [ WebGL.Enable WebGL.Blend
-        , WebGL.BlendFunc ( WebGL.One, WebGL.OneMinusSrcAlpha )
-        ]
+    WebGL.toHtml
         [ width size.width
         , height size.height
         , style [ ( "display", "block" ) ]
@@ -127,7 +126,8 @@ view { size, maybeTexture, position, frame } =
                 []
 
             Just texture ->
-                [ WebGL.render
+                [ WebGL.entityWith
+                    [ Blend.add Blend.one Blend.oneMinusSrcAlpha ]
                     vertexShader
                     fragmentShader
                     mesh
@@ -135,7 +135,7 @@ view { size, maybeTexture, position, frame } =
                     , offset = vec2 (toFloat position.x) (toFloat position.y)
                     , texture = texture
                     , frame = frame
-                    , textureSize = vec2 (toFloat (Tuple.first (WebGL.textureSize texture))) (toFloat (Tuple.second (WebGL.textureSize texture)))
+                    , textureSize = vec2 (toFloat (Tuple.first (Texture.size texture))) (toFloat (Tuple.second (Texture.size texture)))
                     , frameSize = vec2 128 256
                     }
                 ]
@@ -150,9 +150,9 @@ type alias Vertex =
     { position : Vec2 }
 
 
-mesh : WebGL.Drawable Vertex
+mesh : Mesh Vertex
 mesh =
-    WebGL.Triangle
+    WebGL.triangles
         [ ( Vertex (vec2 0 0)
           , Vertex (vec2 64 128)
           , Vertex (vec2 64 0)
