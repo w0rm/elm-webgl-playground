@@ -1,5 +1,16 @@
 # elm-webgl-playground
 
+## CSS3d.elm
+
+Mixes WebGL and DOM layers in one common 3D space.
+
+![Demo](CSS3D.gif)
+
+The front face of the cube is rendered with a transparent color. This makes
+a part of the canvas transparent so the DOM element can be seen through it.
+
+Native module had to be used in order to extract the values from `Mat4`.
+
 ## Tangram.elm
 
 Elm tangram pieces in 3D, composing different logos of Elm-related projects.
