@@ -151,11 +151,11 @@ view { size, position } =
         perspective =
             Mat4.makePerspective 100 (toFloat size.width / toFloat size.height) 0.01 100
 
-        css3dMat =
-            lookAt
-
         webglMat =
             Mat4.mul perspective lookAt
+
+        css3dMat =
+            lookAt
     in
         div
             [ style
@@ -170,7 +170,7 @@ view { size, position } =
                 100
                 size
                 css3dMat
-                [ box 500 500 Mat4.identity ]
+                [ box 500 500 (Mat4.makeTranslate3 0 0 1) ]
             , WebGL.toHtml
                 [ width size.width
                 , height size.height
@@ -190,10 +190,10 @@ matrix3d matrix =
         (Tuple16 a1 a2 a3 a4 b1 b2 b3 b4 c1 c2 c3 c4 d1 d2 d3 d4) =
             mat4toTuple matrix
     in
-        [ a1, b1, c1, d1, -a2, -b2, -c2, -d2, a3, b3, c3, d3, a4, b4, c4, d4 ]
+        [ a1, a2, a3, a4, b1, b2, b3, b4, c1, c2, c3, c4, d1, d2, d3, d4 ]
             |> List.map toString
             |> List.intersperse ","
-            |> List.foldl (++) ""
+            |> List.foldr (++) ""
             |> (\s -> "matrix3d(" ++ s ++ ")")
 
 
