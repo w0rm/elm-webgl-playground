@@ -184,64 +184,61 @@ view { size, position } =
             ]
 
 
+matrix3d : Mat4 -> String
+matrix3d matrix =
+    let
+        (Tuple16 a1 a2 a3 a4 b1 b2 b3 b4 c1 c2 c3 c4 d1 d2 d3 d4) =
+            mat4toTuple matrix
+    in
+        [ a1, b1, c1, d1, -a2, -b2, -c2, -d2, a3, b3, c3, d3, a4, b4, c4, d4 ]
+            |> List.map toString
+            |> List.intersperse ","
+            |> List.foldl (++) ""
+            |> (\s -> "matrix3d(" ++ s ++ ")")
+
+
 box : Float -> Float -> Mat4 -> Html Action
 box width height matrix =
-    let
-        matrix3d (Tuple16 a1 a2 a3 a4 b1 b2 b3 b4 c1 c2 c3 c4 d1 d2 d3 d4) =
-            [ a1, b1, c1, d1, -a2, -b2, -c2, -d2, a3, b3, c3, d3, a4, b4, c4, d4 ]
-                |> List.map toString
-                |> List.intersperse ","
-                |> List.foldl (++) ""
-                |> (\s -> "matrix3d(" ++ s ++ ")")
-    in
-        div
-            [ style
-                [ ( "position", "absolute" )
-                , ( "background-color", "red" )
-                , ( "width", toString width ++ "px" )
-                , ( "height", toString height ++ "px" )
-                , ( "transform"
-                  , ""
-                        ++ "translate3d(-50%, -50%, 0)"
-                        ++ matrix3d (mat4toTuple matrix)
-                  )
-                ]
+    div
+        [ style
+            [ ( "position", "absolute" )
+            , ( "background-color", "red" )
+            , ( "width", toString width ++ "px" )
+            , ( "height", toString height ++ "px" )
+            , ( "transform"
+              , ""
+                    ++ "translate3d(-50%, -50%, 0)"
+                    ++ matrix3d matrix
+              )
             ]
-            []
+        ]
+        []
 
 
 camera : Int -> Window.Size -> Mat4 -> List (Html Action) -> Html Action
 camera fov { width, height } matrix =
-    let
-        matrix3d (Tuple16 a1 a2 a3 a4 b1 b2 b3 b4 c1 c2 c3 c4 d1 d2 d3 d4) =
-            [ a1, -b1, c1, d1, a2, -b2, c2, d2, a3, -b3, c3, d3, a4, -b4, c4, d4 ]
-                |> List.map toString
-                |> List.intersperse ","
-                |> List.foldl (++) ""
-                |> (\s -> "matrix3d(" ++ s ++ ")")
-    in
-        div
-            [ style
-                [ ( "position", "absolute" )
-                , ( "transform-style", "preserve-3d" )
-                , ( "perspective", toString fov ++ "px" )
-                , ( "width", toString width ++ "px" )
-                , ( "height", toString height ++ "px" )
-                , ( "transform"
-                  , ""
-                        ++ "translate3d(0,0,"
-                        ++ toString fov
-                        ++ "px)"
-                        ++ matrix3d (mat4toTuple matrix)
-                        ++ "translate3d("
-                        ++ toString (width // 2)
-                        ++ "px,"
-                        ++ toString (height // 2)
-                        ++ "px,"
-                        ++ "0)"
-                  )
-                ]
+    div
+        [ style
+            [ ( "position", "absolute" )
+            , ( "transform-style", "preserve-3d" )
+            , ( "perspective", toString fov ++ "px" )
+            , ( "width", toString width ++ "px" )
+            , ( "height", toString height ++ "px" )
+            , ( "transform"
+              , ""
+                    ++ "translate3d(0,0,"
+                    ++ toString fov
+                    ++ "px)"
+                    ++ matrix3d matrix
+                    ++ "translate3d("
+                    ++ toString (width // 2)
+                    ++ "px,"
+                    ++ toString (height // 2)
+                    ++ "px,"
+                    ++ "0)"
+              )
             ]
+        ]
 
 
 
