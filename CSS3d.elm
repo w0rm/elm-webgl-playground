@@ -74,7 +74,7 @@ type alias Vertex =
 
 faceMesh : Mesh Vertex
 faceMesh =
-    WebGL.triangles (square (vec4 0 0 0 0))
+    WebGL.triangles (square 100 (vec4 0 0 0 0))
 
 
 sidesMesh : Mesh Vertex
@@ -101,23 +101,23 @@ rotatedSquare color ( angleXZ, angleYZ ) =
         transformTriangle ( a, b, c ) =
             ( transform a, transform b, transform c )
     in
-        List.map transformTriangle (square color)
+        List.map transformTriangle (square 100 color)
 
 
-square : Vec4 -> List ( Vertex, Vertex, Vertex )
-square color =
+square : Float -> Vec4 -> List ( Vertex, Vertex, Vertex )
+square scale color =
     let
         topLeft =
-            Vertex (vec3 -1 1 1) color
+            Vertex (vec3 -scale scale scale) color
 
         topRight =
-            Vertex (vec3 1 1 1) color
+            Vertex (vec3 scale scale scale) color
 
         bottomLeft =
-            Vertex (vec3 -1 -1 1) color
+            Vertex (vec3 -scale -scale scale) color
 
         bottomRight =
-            Vertex (vec3 1 -1 1) color
+            Vertex (vec3 scale -scale scale) color
     in
         [ ( topLeft, topRight, bottomLeft )
         , ( bottomLeft, topRight, bottomRight )
@@ -141,36 +141,40 @@ view : Model -> Html Action
 view { size, position } =
     let
         eye =
-            vec3 (0.5 - toFloat position.x / toFloat size.width) -(0.5 - toFloat position.y / toFloat size.height) 1
+            vec3 (1 - 2 * toFloat position.x / toFloat size.width) -(1 - 2 * toFloat position.y / toFloat size.height) 1
                 |> Vec3.normalize
-                |> Vec3.scale 6
+                |> Vec3.scale 600
 
         lookAt =
             Mat4.makeLookAt eye (vec3 0 0 0) Vec3.j
 
         perspective =
-            Mat4.makePerspective 100 (toFloat size.width / toFloat size.height) 0.01 100
+            Mat4.makePerspective 45 (toFloat size.width / toFloat size.height) 1 10000
 
         webglMat =
             Mat4.mul perspective lookAt
 
         css3dMat =
             lookAt
+
+        fov =
+            toFloat size.height / 2 / (tan (degrees (45 * 0.5)))
     in
         div
             [ style
-                [ ( "position", "relative" )
+                [ ( "position", "absolute" )
                 , ( "transform-style", "preserve-3d" )
+                , ( "perspective", toString fov ++ "px" )
                 , ( "overflow", "hidden" )
                 , ( "width", toString size.width ++ "px" )
                 , ( "height", toString size.height ++ "px" )
                 ]
             ]
             [ camera
-                100
+                fov
                 size
                 css3dMat
-                [ box 500 500 (Mat4.makeTranslate3 0 0 1) ]
+                [ box 200 200 (Mat4.makeTranslate3 0 0 100) ]
             , WebGL.toHtml
                 [ width size.width
                 , height size.height
@@ -184,13 +188,26 @@ view { size, position } =
             ]
 
 
-matrix3d : Mat4 -> String
-matrix3d matrix =
+cameraMatrix3d : Mat4 -> String
+cameraMatrix3d matrix =
     let
         (Tuple16 a1 a2 a3 a4 b1 b2 b3 b4 c1 c2 c3 c4 d1 d2 d3 d4) =
             mat4toTuple matrix
     in
-        [ a1, a2, a3, a4, b1, b2, b3, b4, c1, c2, c3, c4, d1, d2, d3, d4 ]
+        [ a1, -a2, a3, a4, b1, -b2, b3, b4, c1, -c2, c3, c4, d1, -d2, d3, d4 ]
+            |> List.map toString
+            |> List.intersperse ","
+            |> List.foldr (++) ""
+            |> (\s -> "matrix3d(" ++ s ++ ")")
+
+
+objectMatrix3d : Mat4 -> String
+objectMatrix3d matrix =
+    let
+        (Tuple16 a1 a2 a3 a4 b1 b2 b3 b4 c1 c2 c3 c4 d1 d2 d3 d4) =
+            mat4toTuple matrix
+    in
+        [ a1, a2, a3, a4, -b1, -b2, -b3, -b4, c1, c2, c3, c4, d1, d2, d3, d4 ]
             |> List.map toString
             |> List.intersperse ","
             |> List.foldr (++) ""
@@ -203,25 +220,23 @@ box width height matrix =
         [ style
             [ ( "position", "absolute" )
             , ( "background-color", "red" )
+            , ( "transform-style", "preserve-3d" )
             , ( "width", toString width ++ "px" )
             , ( "height", toString height ++ "px" )
             , ( "transform"
-              , ""
-                    ++ "translate3d(-50%, -50%, 0)"
-                    ++ matrix3d matrix
+              , "translate3d(-50%, -50%, 0) " ++ objectMatrix3d matrix
               )
             ]
         ]
-        []
+        [ text "OH WOW, I'm a DIV in the WebGL space!" ]
 
 
-camera : Int -> Window.Size -> Mat4 -> List (Html Action) -> Html Action
+camera : Float -> Window.Size -> Mat4 -> List (Html Action) -> Html Action
 camera fov { width, height } matrix =
     div
         [ style
             [ ( "position", "absolute" )
             , ( "transform-style", "preserve-3d" )
-            , ( "perspective", toString fov ++ "px" )
             , ( "width", toString width ++ "px" )
             , ( "height", toString height ++ "px" )
             , ( "transform"
@@ -229,11 +244,11 @@ camera fov { width, height } matrix =
                     ++ "translate3d(0,0,"
                     ++ toString fov
                     ++ "px)"
-                    ++ matrix3d matrix
+                    ++ cameraMatrix3d matrix
                     ++ "translate3d("
-                    ++ toString (width // 2)
+                    ++ toString (toFloat width / 2)
                     ++ "px,"
-                    ++ toString (height // 2)
+                    ++ toString (toFloat height / 2)
                     ++ "px,"
                     ++ "0)"
               )
