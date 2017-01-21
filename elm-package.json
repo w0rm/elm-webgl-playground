@@ -7,6 +7,7 @@
         "."
     ],
     "exposed-modules": [],
+    "native-modules": true,
     "dependencies": {
         "elm-community/linear-algebra": "1.0.0 <= v < 2.0.0",
         "elm-community/webgl": "2.0.0 <= v < 3.0.0",
