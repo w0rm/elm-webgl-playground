@@ -28,7 +28,8 @@ type alias Model =
 shapes : List Shape
 shapes =
     List.intersperse Shape.elm
-        [ Shape.elmCommunity
+        [ Shape.elmBerlin
+        , Shape.elmCommunity
         , Shape.elmWeekly
         , Shape.elmBridge
         , Shape.elmLive

@@ -1,6 +1,7 @@
 module Tangram.Shape
     exposing
         ( elm
+        , elmBerlin
         , elmWeekly
         , elmLive
         , elmCommunity
@@ -37,6 +38,11 @@ sqrt2 =
     sqrt 2
 
 
+sqrtsqrt2 : Float
+sqrtsqrt2 =
+    sqrt sqrt2
+
+
 defaultPosition : Position
 defaultPosition =
     Position 0 0 0 0 0
@@ -57,12 +63,24 @@ default =
 elm : Shape
 elm =
     { parallelepiped = Position 0 0 -1 3 0
-    , orangeTetrahedron1 = Position 90 0 0 2 0
+    , orangeTetrahedron1 = Position 90 0 0 2 0.01
     , orangeTetrahedron2 = Position 0 0 4 -2 0
     , cube = Position 0 0 2 0 0
     , grayTetrahedron = Position 180 0 -4 0 0
     , blueTetrahedron1 = Position -135 0 2 2 0
     , blueTetrahedron2 = Position -90 0 0 -4 0
+    }
+
+
+elmBerlin : Shape
+elmBerlin =
+    { parallelepiped = Position 45 180 (3 - sqrt2) -2 -2
+    , orangeTetrahedron1 = Position 45 0 -4 (sqrt2 - 6) 0.01
+    , orangeTetrahedron2 = Position 45 0 (10 - sqrt2 * 3) 2 0
+    , cube = Position 45 0 3 2 0
+    , grayTetrahedron = Position -45 0 (3 - sqrt2 * 3) (2 - sqrt2) 0
+    , blueTetrahedron1 = Position 135 0 (1 - sqrt2) sqrt2 0
+    , blueTetrahedron2 = Position 0.0 0 -4 (sqrt2 - 2) 0
     }
 
 
