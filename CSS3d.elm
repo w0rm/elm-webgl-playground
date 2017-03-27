@@ -1,4 +1,4 @@
-module Main exposing (main)
+module CSS3D exposing (main)
 
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (height, style, width)

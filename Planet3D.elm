@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Planet3D exposing (main)
 
 import WebGL exposing (Mesh, Shader)
 import Math.Vector3 exposing (Vec3, vec3, add, scale, normalize, length, dot)

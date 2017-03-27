@@ -10,8 +10,8 @@ for i in animation2d copter3d css3d planet3d shadertoy tangram; do
   elm make $i.elm --yes --output ../gh-pages/$i.html
 done
 
-# copy the textures
-cp -R texture ../gh-pages/
+# copy the texture
+cp animation2d.png ../gh-pages/
 
 # configure domain
 cd ../gh-pages

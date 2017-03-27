@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Animation2D exposing (main)
 
 import Mouse
 import WebGL exposing (Mesh, Shader)
@@ -52,7 +52,7 @@ init =
     , elapsed = 0
     , frame = 0
     }
-        ! [ Texture.load "/texture/delivery-person.png"
+        ! [ Texture.load "animation2d.png"
                 |> Task.attempt
                     (\result ->
                         case result of
