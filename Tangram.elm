@@ -41,7 +41,7 @@ main : Program Never Model Message
 main =
     Html.program
         { init = ( Model (Window.Size 0 0) 0, Task.perform Resize Window.size )
-        , view = \{ time, size } -> view size (time * 0.001)
+        , view = \{ time, size } -> view size (time * 0.0005)
         , update = update
         , subscriptions = subscriptions
         }
@@ -131,7 +131,12 @@ camera ratio =
 
 f : Float -> Float
 f t =
-    abs (cos t)
+    clamp_ ((cos t))
+
+
+clamp_ : Float -> Float
+clamp_ x =
+    (clamp 0.2 0.8 (x ^ 2) - 0.2) / 0.6
 
 
 interpolate : List Shape -> Float -> Shape
@@ -153,7 +158,7 @@ interpolate shapes t =
                 |> Maybe.withDefault Shape.default
 
         d =
-            sin ((t - toFloat current * pi) / 2)
+            clamp_ (sin ((t - toFloat current * pi) / 2))
     in
         Shape.morph d shape1 shape2
 

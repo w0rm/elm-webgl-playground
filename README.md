@@ -1,5 +1,11 @@
 # elm-webgl-playground
 
+## Shadertoy.elm
+
+Renders the shader code from [https://www.shadertoy.com/view/Ms2SD1](https://www.shadertoy.com/view/Ms2SD1) using Elm WebGL.
+
+![Demo](shadertoy.png)
+
 ## CSS3d.elm
 
 Mixes WebGL and DOM layers in one common 3D space.
