@@ -1,5 +1,11 @@
 # elm-webgl-playground
 
+## circle.elm
+
+Draws a circle in the fragment shader.
+
+[![Demo](screenshots/circle.png)](http://unsoundscapes.com/elm-webgl-playground/circle.html)
+
 ## shadertoy.elm
 
 Renders the shader code from [https://www.shadertoy.com/view/Ms2SD1](https://www.shadertoy.com/view/Ms2SD1) using Elm WebGL.

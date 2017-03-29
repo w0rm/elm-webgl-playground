@@ -6,18 +6,15 @@ rm -rf gh-pages || exit 0;
 mkdir -p gh-pages
 
 # compile JS using Elm
-for i in animation2d copter3d css3d planet3d shadertoy tangram; do
-  elm make $i.elm --yes --output ../gh-pages/$i.html
+for i in animation2d circle copter3d css3d planet3d shadertoy tangram; do
+  elm make $i.elm --yes --output gh-pages/$i.html
 done
 
 # copy the texture
-cp animation2d.png ../gh-pages/
-
-# configure domain
-cd ../gh-pages
-echo "unsoundscapes.com" >> CNAME
+cp animation2d.png gh-pages/
 
 # init branch and commit
+cd gh-pages
 git init
 git add .
 git commit -m "Deploying to GH Pages"
