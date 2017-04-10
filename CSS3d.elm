@@ -6,7 +6,6 @@ import Math.Matrix4 as Mat4 exposing (Mat4, translate3)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Math.Vector4 as Vec4 exposing (Vec4, vec4)
 import Mouse
-import Native.Mat4
 import Task exposing (Task)
 import WebGL exposing (Entity, Mesh, Shader)
 import WebGL.Settings as Settings
@@ -124,15 +123,6 @@ square scale color =
         ]
 
 
-type Tuple16
-    = Tuple16 Float Float Float Float Float Float Float Float Float Float Float Float Float Float Float Float
-
-
-mat4toTuple : Mat4 -> Tuple16
-mat4toTuple =
-    Native.Mat4.toTuple
-
-
 
 -- VIEW
 
@@ -188,30 +178,22 @@ view { size, position } =
             ]
 
 
-cameraMatrix3d : Mat4 -> String
-cameraMatrix3d matrix =
-    let
-        (Tuple16 a1 a2 a3 a4 b1 b2 b3 b4 c1 c2 c3 c4 d1 d2 d3 d4) =
-            mat4toTuple matrix
-    in
-        [ a1, -a2, a3, a4, b1, -b2, b3, b4, c1, -c2, c3, c4, d1, -d2, d3, d4 ]
-            |> List.map toString
-            |> List.intersperse ","
-            |> List.foldr (++) ""
-            |> (\s -> "matrix3d(" ++ s ++ ")")
+cameraMatrix3d : { m11 : Float, m21 : Float, m31 : Float, m41 : Float, m12 : Float, m22 : Float, m32 : Float, m42 : Float, m13 : Float, m23 : Float, m33 : Float, m43 : Float, m14 : Float, m24 : Float, m34 : Float, m44 : Float } -> String
+cameraMatrix3d { m11, m21, m31, m41, m12, m22, m32, m42, m13, m23, m33, m43, m14, m24, m34, m44 } =
+    [ m11, -m21, m31, m41, m12, -m22, m32, m42, m13, -m23, m33, m43, m14, -m24, m34, m44 ]
+        |> List.map toString
+        |> List.intersperse ","
+        |> List.foldr (++) ""
+        |> (\s -> "matrix3d(" ++ s ++ ")")
 
 
-objectMatrix3d : Mat4 -> String
-objectMatrix3d matrix =
-    let
-        (Tuple16 a1 a2 a3 a4 b1 b2 b3 b4 c1 c2 c3 c4 d1 d2 d3 d4) =
-            mat4toTuple matrix
-    in
-        [ a1, a2, a3, a4, -b1, -b2, -b3, -b4, c1, c2, c3, c4, d1, d2, d3, d4 ]
-            |> List.map toString
-            |> List.intersperse ","
-            |> List.foldr (++) ""
-            |> (\s -> "matrix3d(" ++ s ++ ")")
+objectMatrix3d : { m11 : Float, m21 : Float, m31 : Float, m41 : Float, m12 : Float, m22 : Float, m32 : Float, m42 : Float, m13 : Float, m23 : Float, m33 : Float, m43 : Float, m14 : Float, m24 : Float, m34 : Float, m44 : Float } -> String
+objectMatrix3d { m11, m21, m31, m41, m12, m22, m32, m42, m13, m23, m33, m43, m14, m24, m34, m44 } =
+    [ m11, m21, m31, m41, -m12, -m22, -m32, -m42, m13, m23, m33, m43, m14, m24, m34, m44 ]
+        |> List.map toString
+        |> List.intersperse ","
+        |> List.foldr (++) ""
+        |> (\s -> "matrix3d(" ++ s ++ ")")
 
 
 box : Float -> Float -> Mat4 -> Html Action
@@ -224,7 +206,7 @@ box width height matrix =
             , ( "width", toString width ++ "px" )
             , ( "height", toString height ++ "px" )
             , ( "transform"
-              , "translate3d(-50%, -50%, 0) " ++ objectMatrix3d matrix
+              , "translate3d(-50%, -50%, 0) " ++ objectMatrix3d (Mat4.toRecord matrix)
               )
             ]
         ]
@@ -244,7 +226,7 @@ camera fov { width, height } matrix =
                     ++ "translate3d(0,0,"
                     ++ toString fov
                     ++ "px)"
-                    ++ cameraMatrix3d matrix
+                    ++ cameraMatrix3d (Mat4.toRecord matrix)
                     ++ "translate3d("
                     ++ toString (toFloat width / 2)
                     ++ "px,"
