@@ -1,0 +1,65 @@
+<html>
+
+<body>
+    <script src="/_compile/Main.elm"></script>
+    <script src="/assets/gif.js"></script>
+    <script>
+        const gifs = {};
+        const app = Elm.Main.fullscreen();
+        app.ports.gifOut.subscribe((action) => {
+            switch (action.type) {
+                case 'StartRecording': {
+                    const { id } = action;
+                    gifs[id] = new GIF({
+                        workerScript: '/assets/gif.worker.js',
+                        quality: 10,
+                        width: 200,
+                        height: 200
+                    });
+                    break;
+                }
+                case 'AddFrame': {
+                    const { id, canvasId, delay } = action;
+                    const gif = gifs[id];
+                    if (gif) {
+                        const canvas = document.getElementById(canvasId);
+                        canvas.toBlob((blob) => {
+                            gif.addFrame(imageFromBlob(blob), { delay });
+                        });
+                    }
+                    break;
+                }
+                case 'StopRecording': {
+                    const { id } = action;
+                    const gif = gifs[id];
+                    if (gif && gif.frames.length > 0) {
+                        gif.once('finished', (blob) => {
+                            const url = URL.createObjectURL(blob);
+                            app.ports.gifIn.send({ type: 'Finished', id, url });
+                        });
+                        gif.on('progress', (progress) => {
+                            app.ports.gifIn.send({ type: 'Progress', id, progress });
+                        });
+                        gif.render();
+                    } else {
+                        app.ports.gifIn.send({ type: 'Aborted', id });
+                    }
+                    delete gifs[id];
+                    break;
+                }
+            }
+        });
+
+        function imageFromBlob(blob) {
+            const image = document.createElement('img');
+            const url = URL.createObjectURL(blob);
+            image.onload = () => {
+                URL.revokeObjectURL(url); // no longer need to read the blob 
+            };
+            image.src = url;
+            return image;
+        }
+    </script>
+</body>
+
+</html>
