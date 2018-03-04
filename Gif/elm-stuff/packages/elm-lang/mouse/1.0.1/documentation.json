@@ -1,0 +1,43 @@
+[
+  {
+    "name": "Mouse",
+    "comment": " This library lets you listen to global mouse events. This is useful\nfor a couple tricky scenarios including:\n\n  - Detecting a \"click\" outside the current component.\n  - Supporting drag-and-drop interactions.\n\n# Mouse Position\n@docs Position, position\n\n# Subscriptions\n@docs clicks, moves, downs, ups\n\n",
+    "aliases": [
+      {
+        "name": "Position",
+        "comment": " The position of the mouse relative to the whole document. So if you are\nscrolled down a bunch, you are still getting a coordinate relative to the\nvery top left corner of the *whole* document.\n",
+        "args": [],
+        "type": "{ x : Int, y : Int }"
+      }
+    ],
+    "types": [],
+    "values": [
+      {
+        "name": "clicks",
+        "comment": " Subscribe to mouse clicks anywhere on screen.\n",
+        "type": "(Mouse.Position -> msg) -> Platform.Sub.Sub msg"
+      },
+      {
+        "name": "downs",
+        "comment": " Get a position whenever the user *presses* the mouse button.\n",
+        "type": "(Mouse.Position -> msg) -> Platform.Sub.Sub msg"
+      },
+      {
+        "name": "moves",
+        "comment": " Subscribe to mouse moves anywhere on screen. It is best to unsubscribe if\nyou do not need these events. Otherwise you will handle a bunch of events for\nno benefit.\n",
+        "type": "(Mouse.Position -> msg) -> Platform.Sub.Sub msg"
+      },
+      {
+        "name": "position",
+        "comment": " The decoder used to extract a `Position` from a JavaScript mouse event.\n",
+        "type": "Json.Decode.Decoder Mouse.Position"
+      },
+      {
+        "name": "ups",
+        "comment": " Get a position whenever the user *releases* the mouse button.\n",
+        "type": "(Mouse.Position -> msg) -> Platform.Sub.Sub msg"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  }
+]

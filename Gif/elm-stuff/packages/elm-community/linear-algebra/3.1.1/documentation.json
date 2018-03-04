@@ -1,0 +1,546 @@
+[
+  {
+    "name": "Math.Matrix4",
+    "comment": " A high performance linear algebra library using native JS arrays. Geared\ntowards 3D graphics and use with `Graphics.WebGL`. All matrices are immutable.\n\nThis library uses the convention that the prefix `make` is creating a new\narray,as without the prefix, you are applying some transform to an\nexisting matrix.\n\n# Create\n\n@docs Mat4, identity, makeFromList\n\n# Operations\n\n@docs inverse, inverseOrthonormal, mul, mulAffine, transpose, makeBasis, transform\n\n# Projections\n\n@docs makeFrustum, makePerspective, makeOrtho, makeOrtho2D, makeLookAt\n\n# Apply Transformations\n\n@docs rotate, scale, scale3, translate, translate3\n\n# Create Transformations\n\n@docs makeRotate, makeScale, makeScale3, makeTranslate, makeTranslate3\n\n# Conversions\n\n@docs toRecord, fromRecord\n\n",
+    "aliases": [],
+    "types": [
+      {
+        "name": "Mat4",
+        "comment": " 4x4 matrix type\n",
+        "args": [],
+        "cases": []
+      }
+    ],
+    "values": [
+      {
+        "name": "fromRecord",
+        "comment": " Convert a record to a matrix.\n",
+        "type": "{ m11 : Float , m21 : Float , m31 : Float , m41 : Float , m12 : Float , m22 : Float , m32 : Float , m42 : Float , m13 : Float , m23 : Float , m33 : Float , m43 : Float , m14 : Float , m24 : Float , m34 : Float , m44 : Float } -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "identity",
+        "comment": " A matrix with all 0s, except 1s on the diagonal.\n",
+        "type": "Math.Matrix4.Mat4"
+      },
+      {
+        "name": "inverse",
+        "comment": " Computes the inverse of any matrix. This is somewhat computationally\nintensive. If the matrix is not invertible, `Nothing` is returned.\n",
+        "type": "Math.Matrix4.Mat4 -> Maybe.Maybe Math.Matrix4.Mat4"
+      },
+      {
+        "name": "inverseOrthonormal",
+        "comment": " Computes the inverse of the given matrix, assuming that the matrix is\northonormal. This algorithm is more efficient than general matrix inversion, and\nhas no possibility of failing.\n",
+        "type": "Math.Matrix4.Mat4 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeBasis",
+        "comment": " Creates a transform from a basis consisting of 3 linearly independent vectors.\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeFromList",
+        "comment": " Creates a matrix from a list of elements. Returns Nothing if the length of\nthe list is not exactly 16 (4x4).\n",
+        "type": "List Float -> Maybe.Maybe Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeFrustum",
+        "comment": " Creates a matrix for a projection frustum with the given parameters.\n\nParameters:\n\n * left - the left coordinate of the frustum\n * right- the right coordinate of the frustum\n * bottom - the bottom coordinate of the frustum\n * top - the top coordinate of the frustum\n * znear - the near z distance of the frustum\n * zfar - the far z distance of the frustum\n",
+        "type": "Float -> Float -> Float -> Float -> Float -> Float -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeLookAt",
+        "comment": "\nCreates a transformation matrix for a camera.\n\nParameters:\n\n * eye - The location of the camera\n * center - The location of the focused object\n * up - The \"up\" direction according to the camera\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeOrtho",
+        "comment": "\nCreates a matrix for an orthogonal frustum projection with the given parameters.\n\nParameters:\n\n * left - the left coordinate of the frustum\n * right- the right coordinate of the frustum\n * bottom - the bottom coordinate of the frustum\n * top - the top coordinate of the frustum\n * znear - the near z distance of the frustum\n * zfar - the far z distance of the frustum\n",
+        "type": "Float -> Float -> Float -> Float -> Float -> Float -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeOrtho2D",
+        "comment": " Creates a matrix for a 2D orthogonal frustum projection with the given\nparameters. `znear` and `zfar` are assumed to be -1 and 1, respectively.\n\nParameters:\n\n * left - the left coordinate of the frustum\n * right- the right coordinate of the frustum\n * bottom - the bottom coordinate of the frustum\n * top - the top coordinate of the frustum\n",
+        "type": "Float -> Float -> Float -> Float -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makePerspective",
+        "comment": " Creates a matrix for a perspective projection with the given parameters.\n\nParameters:\n\n * fovy - field of view in the y axis, in degrees\n * aspect - aspect ratio\n * znear - the near z distance of the projection\n * zfar - the far z distance of the projection\n",
+        "type": "Float -> Float -> Float -> Float -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeRotate",
+        "comment": " Creates a transformation matrix for rotation in radians about the\n3-element vector axis.\n",
+        "type": "Float -> Math.Vector3.Vec3 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeScale",
+        "comment": " Creates a transformation matrix for scaling each of the x, y, and z axes by\nthe amount given in the corresponding element of the 3-element vector.\n",
+        "type": "Math.Vector3.Vec3 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeScale3",
+        "comment": " Creates a transformation matrix for scaling by 3 scalar values, one for\neach of the x, y, and z directions.\n",
+        "type": "Float -> Float -> Float -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeTranslate",
+        "comment": " Creates a transformation matrix for translating each of the x, y, and z\naxes by the amount given in the corresponding element of the 3-element vector.\n",
+        "type": "Math.Vector3.Vec3 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "makeTranslate3",
+        "comment": "\nCreates a transformation matrix for translating by 3 scalar values, one for\neach of the x, y, and z directions.\n",
+        "type": "Float -> Float -> Float -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "mul",
+        "comment": " Matrix multiplcation: a * b\n",
+        "type": "Math.Matrix4.Mat4 -> Math.Matrix4.Mat4 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "mulAffine",
+        "comment": " Matrix multiplication, assuming a and b are affine: a * b\n",
+        "type": "Math.Matrix4.Mat4 -> Math.Matrix4.Mat4 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "rotate",
+        "comment": " Concatenates a rotation in radians about an axis to the given matrix.\n",
+        "type": "Float -> Math.Vector3.Vec3 -> Math.Matrix4.Mat4 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "scale",
+        "comment": " Concatenates a scaling to the given matrix.\n",
+        "type": "Math.Vector3.Vec3 -> Math.Matrix4.Mat4 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "scale3",
+        "comment": " Concatenates a scaling to the given matrix.\n",
+        "type": "Float -> Float -> Float -> Math.Matrix4.Mat4 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "toRecord",
+        "comment": " Convert a matrix to a record.\n",
+        "type": "Math.Matrix4.Mat4 -> { m11 : Float , m21 : Float , m31 : Float , m41 : Float , m12 : Float , m22 : Float , m32 : Float , m42 : Float , m13 : Float , m23 : Float , m33 : Float , m43 : Float , m14 : Float , m24 : Float , m34 : Float , m44 : Float }"
+      },
+      {
+        "name": "transform",
+        "comment": " Multiply a vector by a 4x4 matrix: m * v\n",
+        "type": "Math.Matrix4.Mat4 -> Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "translate",
+        "comment": "\nConcatenates a translation to the given matrix.\n",
+        "type": "Math.Vector3.Vec3 -> Math.Matrix4.Mat4 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "translate3",
+        "comment": "\nConcatenates a translation to the given matrix.\n",
+        "type": "Float -> Float -> Float -> Math.Matrix4.Mat4 -> Math.Matrix4.Mat4"
+      },
+      {
+        "name": "transpose",
+        "comment": " \"Flip\" the matrix across the diagonal by swapping row index and column\nindex.\n",
+        "type": "Math.Matrix4.Mat4 -> Math.Matrix4.Mat4"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "Math.Vector4",
+    "comment": " A high performance linear algebra library using native JS arrays. Geared\ntowards 3D graphics and use with `Graphics.WebGL`. All vectors are immutable.\n\n# Create\n@docs Vec4, vec4\n\n# Get and Set\nThe set functions create a new copy of the vector, updating a single field.\n\n@docs getX, getY, getZ, getW, setX, setY, setZ, setW\n\n# Operations\n@docs add, sub, negate, scale, dot, normalize, direction,\n      length, lengthSquared, distance, distanceSquared\n\n# Conversions\n@docs toTuple, fromTuple, toRecord, fromRecord\n",
+    "aliases": [],
+    "types": [
+      {
+        "name": "Vec4",
+        "comment": " Four dimensional vector type\n",
+        "args": [],
+        "cases": []
+      }
+    ],
+    "values": [
+      {
+        "name": "add",
+        "comment": " Vector addition: a + b\n",
+        "type": "Math.Vector4.Vec4 -> Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "direction",
+        "comment": " The normalized direction from b to a: (a - b) / |a - b|\n",
+        "type": "Math.Vector4.Vec4 -> Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "distance",
+        "comment": " The distance between two vectors.\n",
+        "type": "Math.Vector4.Vec4 -> Math.Vector4.Vec4 -> Float"
+      },
+      {
+        "name": "distanceSquared",
+        "comment": " The square of the distance between two vectors.\n",
+        "type": "Math.Vector4.Vec4 -> Math.Vector4.Vec4 -> Float"
+      },
+      {
+        "name": "dot",
+        "comment": " The dot product of a and b\n",
+        "type": "Math.Vector4.Vec4 -> Math.Vector4.Vec4 -> Float"
+      },
+      {
+        "name": "fromRecord",
+        "comment": " Convert a record to a vector.\n",
+        "type": "{ x : Float, y : Float, z : Float, w : Float } -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "fromTuple",
+        "comment": " Convert a tuple to a vector.\n",
+        "type": "( Float, Float, Float, Float ) -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "getW",
+        "comment": " Extract the w component of a vector.\n",
+        "type": "Math.Vector4.Vec4 -> Float"
+      },
+      {
+        "name": "getX",
+        "comment": " Extract the x component of a vector.\n",
+        "type": "Math.Vector4.Vec4 -> Float"
+      },
+      {
+        "name": "getY",
+        "comment": " Extract the y component of a vector.\n",
+        "type": "Math.Vector4.Vec4 -> Float"
+      },
+      {
+        "name": "getZ",
+        "comment": " Extract the z component of a vector.\n",
+        "type": "Math.Vector4.Vec4 -> Float"
+      },
+      {
+        "name": "length",
+        "comment": " The length of the given vector: |a|\n",
+        "type": "Math.Vector4.Vec4 -> Float"
+      },
+      {
+        "name": "lengthSquared",
+        "comment": " The square of the length of the given vector: |a| * |a|\n",
+        "type": "Math.Vector4.Vec4 -> Float"
+      },
+      {
+        "name": "negate",
+        "comment": " Vector negation: -a\n",
+        "type": "Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "normalize",
+        "comment": " A unit vector with the same direction as the given vector: a / |a|\n",
+        "type": "Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "scale",
+        "comment": " Multiply the vector by a scalar: s * v\n",
+        "type": "Float -> Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "setW",
+        "comment": " Update the w component of a vector, returning a new vector.\n",
+        "type": "Float -> Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "setX",
+        "comment": " Update the x component of a vector, returning a new vector.\n",
+        "type": "Float -> Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "setY",
+        "comment": " Update the y component of a vector, returning a new vector.\n",
+        "type": "Float -> Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "setZ",
+        "comment": " Update the z component of a vector, returning a new vector.\n",
+        "type": "Float -> Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "sub",
+        "comment": " Vector subtraction: a - b\n",
+        "type": "Math.Vector4.Vec4 -> Math.Vector4.Vec4 -> Math.Vector4.Vec4"
+      },
+      {
+        "name": "toRecord",
+        "comment": " Convert a vector to a record.\n",
+        "type": "Math.Vector4.Vec4 -> { x : Float, y : Float, z : Float, w : Float }"
+      },
+      {
+        "name": "toTuple",
+        "comment": " Convert a vector to a tuple.\n",
+        "type": "Math.Vector4.Vec4 -> ( Float, Float, Float, Float )"
+      },
+      {
+        "name": "vec4",
+        "comment": " Creates a new 4-element vector with the given x, y, z, and w values.\n",
+        "type": "Float -> Float -> Float -> Float -> Math.Vector4.Vec4"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "Math.Vector3",
+    "comment": " A high performance linear algebra library using native JS arrays. Geared\ntowards 3D graphics and use with `Graphics.WebGL`. All vectors are immutable.\n\n# Create\n@docs Vec3, vec3, i, j, k\n\n# Get and Set\nThe set functions create a new copy of the vector, updating a single field.\n\n@docs getX, getY, getZ, setX, setY, setZ\n\n# Operations\n@docs add, sub, negate, scale, dot, cross, normalize, direction,\n      length, lengthSquared, distance, distanceSquared\n\n# Conversions\n@docs toTuple, fromTuple, toRecord, fromRecord\n",
+    "aliases": [],
+    "types": [
+      {
+        "name": "Vec3",
+        "comment": " Three dimensional vector type\n",
+        "args": [],
+        "cases": []
+      }
+    ],
+    "values": [
+      {
+        "name": "add",
+        "comment": " Vector addition: a + b\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "cross",
+        "comment": " The cross product of a and b\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "direction",
+        "comment": " The normalized direction from b to a: (a - b) / |a - b|\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "distance",
+        "comment": " The distance between two vectors.\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Float"
+      },
+      {
+        "name": "distanceSquared",
+        "comment": " The square of the distance between two vectors.\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Float"
+      },
+      {
+        "name": "dot",
+        "comment": " The dot product of a and b\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Float"
+      },
+      {
+        "name": "fromRecord",
+        "comment": " Convert a record to a vector.\n",
+        "type": "{ x : Float, y : Float, z : Float } -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "fromTuple",
+        "comment": " Convert a tuple to a vector.\n",
+        "type": "( Float, Float, Float ) -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "getX",
+        "comment": " Extract the x component of a vector.\n",
+        "type": "Math.Vector3.Vec3 -> Float"
+      },
+      {
+        "name": "getY",
+        "comment": " Extract the y component of a vector.\n",
+        "type": "Math.Vector3.Vec3 -> Float"
+      },
+      {
+        "name": "getZ",
+        "comment": " Extract the z component of a vector.\n",
+        "type": "Math.Vector3.Vec3 -> Float"
+      },
+      {
+        "name": "i",
+        "comment": " The unit vector &icirc; which points in the x direction: `vec3 1 0 0`\n",
+        "type": "Math.Vector3.Vec3"
+      },
+      {
+        "name": "j",
+        "comment": " The unit vector &jcirc; which points in the y direction: `vec3 0 1 0`\n",
+        "type": "Math.Vector3.Vec3"
+      },
+      {
+        "name": "k",
+        "comment": " The unit vector k&#0770; which points in the z direction: `vec3 0 0 1`\n",
+        "type": "Math.Vector3.Vec3"
+      },
+      {
+        "name": "length",
+        "comment": " The length of the given vector: |a|\n",
+        "type": "Math.Vector3.Vec3 -> Float"
+      },
+      {
+        "name": "lengthSquared",
+        "comment": " The square of the length of the given vector: |a| * |a|\n",
+        "type": "Math.Vector3.Vec3 -> Float"
+      },
+      {
+        "name": "negate",
+        "comment": " Vector negation: -a\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "normalize",
+        "comment": " A unit vector with the same direction as the given vector: a / |a|\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "scale",
+        "comment": " Multiply the vector by a scalar: s * v\n",
+        "type": "Float -> Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "setX",
+        "comment": " Update the x component of a vector, returning a new vector.\n",
+        "type": "Float -> Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "setY",
+        "comment": " Update the y component of a vector, returning a new vector.\n",
+        "type": "Float -> Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "setZ",
+        "comment": " Update the z component of a vector, returning a new vector.\n",
+        "type": "Float -> Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "sub",
+        "comment": " Vector subtraction: a - b\n",
+        "type": "Math.Vector3.Vec3 -> Math.Vector3.Vec3 -> Math.Vector3.Vec3"
+      },
+      {
+        "name": "toRecord",
+        "comment": " Convert a vector to a record.\n",
+        "type": "Math.Vector3.Vec3 -> { x : Float, y : Float, z : Float }"
+      },
+      {
+        "name": "toTuple",
+        "comment": " Convert a vector to a tuple.\n",
+        "type": "Math.Vector3.Vec3 -> ( Float, Float, Float )"
+      },
+      {
+        "name": "vec3",
+        "comment": " Creates a new 3-element vector with the given values.\n",
+        "type": "Float -> Float -> Float -> Math.Vector3.Vec3"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "Math.Vector2",
+    "comment": " A high performance linear algebra library using native JS arrays. Geared\ntowards 3D graphics and use with `Graphics.WebGL`. All vectors are immutable.\n\n# Create\n@docs Vec2, vec2\n\n# Get and Set\nThe set functions create a new copy of the vector, updating a single field.\n\n@docs getX, getY, setX, setY\n\n# Operations\n@docs add, sub, negate, scale, dot, normalize, direction,\n      length, lengthSquared, distance, distanceSquared\n\n# Conversions\n@docs toTuple, fromTuple, toRecord, fromRecord\n",
+    "aliases": [],
+    "types": [
+      {
+        "name": "Vec2",
+        "comment": " Two dimensional vector type\n",
+        "args": [],
+        "cases": []
+      }
+    ],
+    "values": [
+      {
+        "name": "add",
+        "comment": " Vector addition: a + b\n",
+        "type": "Math.Vector2.Vec2 -> Math.Vector2.Vec2 -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "direction",
+        "comment": " The normalized direction from b to a: (a - b) / |a - b|\n",
+        "type": "Math.Vector2.Vec2 -> Math.Vector2.Vec2 -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "distance",
+        "comment": " The distance between two vectors.\n",
+        "type": "Math.Vector2.Vec2 -> Math.Vector2.Vec2 -> Float"
+      },
+      {
+        "name": "distanceSquared",
+        "comment": " The square of the distance between two vectors.\n",
+        "type": "Math.Vector2.Vec2 -> Math.Vector2.Vec2 -> Float"
+      },
+      {
+        "name": "dot",
+        "comment": " The dot product of a and b\n",
+        "type": "Math.Vector2.Vec2 -> Math.Vector2.Vec2 -> Float"
+      },
+      {
+        "name": "fromRecord",
+        "comment": " Convert a record to a vector.\n",
+        "type": "{ x : Float, y : Float } -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "fromTuple",
+        "comment": " Convert a tuple to a vector.\n",
+        "type": "( Float, Float ) -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "getX",
+        "comment": " Extract the x component of a vector.\n",
+        "type": "Math.Vector2.Vec2 -> Float"
+      },
+      {
+        "name": "getY",
+        "comment": " Extract the y component of a vector.\n",
+        "type": "Math.Vector2.Vec2 -> Float"
+      },
+      {
+        "name": "length",
+        "comment": " The length of the given vector: |a|\n",
+        "type": "Math.Vector2.Vec2 -> Float"
+      },
+      {
+        "name": "lengthSquared",
+        "comment": " The square of the length of the given vector: |a| * |a|\n",
+        "type": "Math.Vector2.Vec2 -> Float"
+      },
+      {
+        "name": "negate",
+        "comment": " Vector negation: -a\n",
+        "type": "Math.Vector2.Vec2 -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "normalize",
+        "comment": " A unit vector with the same direction as the given vector: a / |a|\n",
+        "type": "Math.Vector2.Vec2 -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "scale",
+        "comment": " Multiply the vector by a scalar: s * v\n",
+        "type": "Float -> Math.Vector2.Vec2 -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "setX",
+        "comment": " Update the x component of a vector, returning a new vector.\n",
+        "type": "Float -> Math.Vector2.Vec2 -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "setY",
+        "comment": " Update the y component of a vector, returning a new vector.\n",
+        "type": "Float -> Math.Vector2.Vec2 -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "sub",
+        "comment": " Vector subtraction: a - b\n",
+        "type": "Math.Vector2.Vec2 -> Math.Vector2.Vec2 -> Math.Vector2.Vec2"
+      },
+      {
+        "name": "toRecord",
+        "comment": " Convert a vector to a record.\n",
+        "type": "Math.Vector2.Vec2 -> { x : Float, y : Float }"
+      },
+      {
+        "name": "toTuple",
+        "comment": " Convert a vector to a tuple.\n",
+        "type": "Math.Vector2.Vec2 -> ( Float, Float )"
+      },
+      {
+        "name": "vec2",
+        "comment": " Creates a new 2-element vector with the given values.\n",
+        "type": "Float -> Float -> Math.Vector2.Vec2"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  }
+]

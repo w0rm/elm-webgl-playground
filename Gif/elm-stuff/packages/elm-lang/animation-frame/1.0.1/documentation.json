@@ -1,0 +1,21 @@
+[
+  {
+    "name": "AnimationFrame",
+    "comment": " Browsers have their own render loop, repainting things as fast as possible.\nIf you want smooth animations in your application, it is helpful to sync up\nwith the browsers natural refresh rate. The subscriptions in this library fire\nin step with the browser so you can make sure you are not doing extra animation\nframes.\n\n**Note:** The subscriptions in this library hook into JavaScript's\n`requestAnimationFrame` function.\n\n# Animation Subscriptions\n@docs times, diffs\n\n",
+    "aliases": [],
+    "types": [],
+    "values": [
+      {
+        "name": "diffs",
+        "comment": " Subscribe to the time diffs between animation frames, given in lockstep\nwith the browser's natural rerender speed.\n",
+        "type": "(Time.Time -> msg) -> Platform.Sub.Sub msg"
+      },
+      {
+        "name": "times",
+        "comment": " Subscribe to the current time, given in lockstep with the browser's natural\nrerender speed.\n",
+        "type": "(Time.Time -> msg) -> Platform.Sub.Sub msg"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  }
+]

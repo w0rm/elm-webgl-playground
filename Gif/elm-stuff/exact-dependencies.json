@@ -1,0 +1,10 @@
+{
+    "elm-lang/animation-frame": "1.0.1",
+    "elm-lang/virtual-dom": "2.0.4",
+    "elm-lang/mouse": "1.0.1",
+    "elm-community/linear-algebra": "3.1.1",
+    "elm-community/webgl": "2.0.5",
+    "elm-lang/dom": "1.1.1",
+    "elm-lang/html": "2.0.0",
+    "elm-lang/core": "5.1.1"
+}
