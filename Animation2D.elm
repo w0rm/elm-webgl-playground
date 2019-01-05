@@ -1,43 +1,45 @@
 module Animation2D exposing (main)
 
-import Mouse
-import WebGL exposing (Mesh, Shader)
-import WebGL.Settings.Blend as Blend
-import WebGL.Texture as Texture exposing (Texture, Error)
+import Browser
+import Browser.Dom exposing (getViewport)
+import Browser.Events exposing (onAnimationFrameDelta, onMouseMove, onResize)
+import Html exposing (Html)
+import Html.Attributes as Attributes
+import Json.Decode as Decode exposing (Decoder, Value)
 import Math.Vector2 exposing (Vec2, vec2)
 import Task exposing (Task)
-import AnimationFrame
-import Window
-import Html.Attributes exposing (width, height, style)
-import Html exposing (Html)
-import Time exposing (Time)
+import WebGL exposing (Mesh, Shader)
+import WebGL.Settings.Blend as Blend
+import WebGL.Texture as Texture exposing (Error, Texture)
 
 
 {-| Types
 -}
 type Action
-    = Resize Window.Size
-    | MouseMove Mouse.Position
-    | Animate Time
+    = Resize Float Float
+    | MouseMove Float Float
+    | Animate Float
     | TextureLoad Texture
     | TextureError Error
 
 
 type alias Model =
-    { size : Window.Size
-    , position : Mouse.Position
-    , maybeTexture : Maybe WebGL.Texture
-    , elapsed : Time
+    { width : Float
+    , height : Float
+    , left : Float
+    , top : Float
+    , maybeTexture : Maybe Texture
+    , elapsed : Float
     , frame : Int
     }
 
 
 {-| Program
 -}
-main : Program Never Model Action
+main : Program () Model Action
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , subscriptions = subscriptions
         , update = update
         , view = view
@@ -46,55 +48,76 @@ main =
 
 init : ( Model, Cmd Action )
 init =
-    { size = Window.Size 0 0
-    , position = Mouse.Position 0 0
-    , maybeTexture = Nothing
-    , elapsed = 0
-    , frame = 0
-    }
-        ! [ Texture.load "animation2d.png"
-                |> Task.attempt
-                    (\result ->
-                        case result of
-                            Err err ->
-                                TextureError err
+    ( { width = 0
+      , height = 0
+      , left = 0
+      , top = 0
+      , maybeTexture = Nothing
+      , elapsed = 0
+      , frame = 0
+      }
+    , Cmd.batch
+        [ Texture.load "animation2d.png"
+            |> Task.attempt
+                (\result ->
+                    case result of
+                        Err err ->
+                            TextureError err
 
-                            Ok val ->
-                                TextureLoad val
-                    )
-          , Task.perform Resize Window.size
-          ]
+                        Ok val ->
+                            TextureLoad val
+                )
+        , Task.perform (\{ viewport } -> Resize viewport.width viewport.height) getViewport
+        ]
+    )
 
 
 subscriptions : Model -> Sub Action
 subscriptions _ =
     Sub.batch
-        [ AnimationFrame.diffs Animate
-        , Mouse.moves MouseMove
-        , Window.resizes Resize
+        [ onAnimationFrameDelta Animate
+        , onMouseMove mousePosition
+        , onResize (\w h -> Resize (toFloat w) (toFloat h))
         ]
+
+
+mousePosition : Decoder Action
+mousePosition =
+    Decode.map2 MouseMove
+        (Decode.field "pageX" Decode.float)
+        (Decode.field "pageY" Decode.float)
 
 
 update : Action -> Model -> ( Model, Cmd Action )
 update action model =
     case action of
-        Resize size ->
-            { model | size = size } ! []
+        Resize width height ->
+            ( { model | width = width, height = height }
+            , Cmd.none
+            )
 
-        MouseMove position ->
-            { model | position = position } ! []
+        MouseMove left top ->
+            ( { model | left = left, top = top }
+            , Cmd.none
+            )
 
         Animate elapsed ->
-            animate elapsed model ! []
+            ( animate elapsed model
+            , Cmd.none
+            )
 
         TextureLoad texture ->
-            { model | maybeTexture = Just texture } ! []
+            ( { model | maybeTexture = Just texture }
+            , Cmd.none
+            )
 
         TextureError _ ->
-            Debug.crash "Error loading texture"
+            ( model
+            , Cmd.none
+            )
 
 
-animate : Time -> Model -> Model
+animate : Float -> Model -> Model
 animate elapsed model =
     let
         timeout =
@@ -103,23 +126,27 @@ animate elapsed model =
         newElapsed =
             elapsed + model.elapsed
     in
-        if newElapsed > timeout then
-            { model
-                | frame = (model.frame + 1) % 24
-                , elapsed = newElapsed - timeout
-            }
-        else
-            { model
-                | elapsed = newElapsed
-            }
+    if newElapsed > timeout then
+        { model
+            | frame = modBy 24 (model.frame + 1)
+            , elapsed = newElapsed - timeout
+        }
+
+    else
+        { model
+            | elapsed = newElapsed
+        }
 
 
 view : Model -> Html Action
-view { size, maybeTexture, position, frame } =
+view { width, height, left, top, maybeTexture, frame } =
     WebGL.toHtml
-        [ width size.width
-        , height size.height
-        , style [ ( "display", "block" ) ]
+        [ Attributes.width (round width)
+        , Attributes.height (round height)
+        , Attributes.style "display" "block"
+        , Attributes.style "position" "absolute"
+        , Attributes.style "left" "0"
+        , Attributes.style "top" "0"
         ]
         (case maybeTexture of
             Nothing ->
@@ -131,8 +158,8 @@ view { size, maybeTexture, position, frame } =
                     vertexShader
                     fragmentShader
                     mesh
-                    { screenSize = vec2 (toFloat size.width) (toFloat size.height)
-                    , offset = vec2 (toFloat position.x) (toFloat position.y)
+                    { screenSize = vec2 width height
+                    , offset = vec2 left top
                     , texture = texture
                     , frame = frame
                     , textureSize = vec2 (toFloat (Tuple.first (Texture.size texture))) (toFloat (Tuple.second (Texture.size texture)))
@@ -182,7 +209,7 @@ vertexShader =
 |]
 
 
-fragmentShader : WebGL.Shader {} { u | texture : WebGL.Texture, textureSize : Vec2, frameSize : Vec2, frame : Int } { texturePos : Vec2 }
+fragmentShader : WebGL.Shader {} { u | texture : Texture, textureSize : Vec2, frameSize : Vec2, frame : Int } { texturePos : Vec2 }
 fragmentShader =
     [glsl|
 

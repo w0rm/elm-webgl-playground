@@ -3,41 +3,44 @@
 
 module Shadertoy exposing (main)
 
-import AnimationFrame
-import Html exposing (Html, div, text, a)
-import Html.Attributes exposing (height, href, style, width)
+import Browser
+import Browser.Dom exposing (getViewport)
+import Browser.Events exposing (onAnimationFrameDelta, onMouseDown, onMouseMove, onMouseUp, onResize)
+import Html exposing (Html, a, div, text)
+import Html.Attributes as Attributes exposing (href, style)
+import Json.Decode as Decode exposing (Decoder, Value)
 import Math.Vector2 as Vec2 exposing (Vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Math.Vector4 as Vec4 exposing (Vec4, vec4)
-import Time exposing (Time)
-import WebGL exposing (Mesh, Shader, Texture)
-import Window exposing (Size)
-import Mouse exposing (Position)
 import Task
+import WebGL exposing (Mesh, Shader)
 
 
 type Msg
-    = Diff Time
-    | Move Position
+    = Diff Float
+    | MouseMove Float Float
     | Press Bool
-    | Resize Size
+    | Resize Float Float
 
 
 type alias Model =
-    { size : Size
-    , position : Position
+    { width : Float
+    , height : Float
+    , left : Float
+    , top : Float
     , pressed : Bool
     , time : Float
     }
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { init =
-            ( Model (Size 0 0) (Position 0 0) False 0
-            , Task.perform Resize Window.size
-            )
+            always
+                ( Model 0 0 0 0 False 0
+                , Task.perform (\{ viewport } -> Resize viewport.width viewport.height) getViewport
+                )
         , view = view
         , subscriptions = subscriptions
         , update = update
@@ -48,59 +51,77 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Diff time ->
-            { model | time = model.time + time } ! []
+            ( { model | time = model.time + time }
+            , Cmd.none
+            )
 
-        Move position ->
-            { model | position = position } ! []
+        MouseMove left top ->
+            ( { model | left = left, top = top }
+            , Cmd.none
+            )
 
         Press pressed ->
-            { model | pressed = pressed } ! []
+            ( { model | pressed = pressed }
+            , Cmd.none
+            )
 
-        Resize size ->
-            { model | size = size } ! []
+        Resize width height ->
+            ( { model | width = width, height = height }
+            , Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions { pressed } =
     Sub.batch
-        [ AnimationFrame.diffs Diff
-        , Window.resizes Resize
-        , Mouse.downs (always (Press True))
-        , Mouse.ups (always (Press False))
+        [ onAnimationFrameDelta Diff
+        , onResize (\w h -> Resize (toFloat w) (toFloat h))
+        , onMouseDown (Decode.succeed (Press True))
+        , onMouseUp (Decode.succeed (Press False))
         , if pressed then
-            Mouse.moves Move
+            onMouseMove mousePosition
+
           else
             Sub.none
         ]
 
 
+mousePosition : Decoder Msg
+mousePosition =
+    Decode.map2 MouseMove
+        (Decode.field "pageX" Decode.float)
+        (Decode.field "pageY" Decode.float)
+
+
 view : Model -> Html msg
-view { size, position, time } =
+view { width, height, left, top, time } =
     div []
         [ WebGL.toHtml
-            [ width size.width
-            , height size.height
-            , style [ ( "display", "block" ) ]
+            [ Attributes.width (round width)
+            , Attributes.height (round height)
+            , style "position" "absolute"
+            , style "left" "0"
+            , style "top" "0"
+            , style "display" "block"
             ]
             [ WebGL.entity
                 vertexShader
                 fragmentShader
                 mesh
-                { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
+                { iResolution = vec3 width height 0
                 , iGlobalTime = time / 1000
-                , iMouse = vec4 (toFloat position.x) (toFloat position.y) 0 0
+                , iMouse = vec4 left top 0 0
                 }
             ]
         , a
             [ href "https://www.shadertoy.com/view/Ms2SD1"
-            , style
-                [ ( "position", "absolute" )
-                , ( "top", "0" )
-                , ( "color", "#fff" )
-                , ( "font", "300 20px sans-serif" )
-                , ( "background-color", "#222" )
-                , ( "text-decoration", "none" )
-                ]
+            , style "position" "absolute"
+            , style "left" "0"
+            , style "top" "0"
+            , style "color" "#fff"
+            , style "font" "300 20px sans-serif"
+            , style "background-color" "#222"
+            , style "text-decoration" "none"
             ]
             [ text "The shader code is taken from: https://www.shadertoy.com/view/Ms2SD1" ]
         ]

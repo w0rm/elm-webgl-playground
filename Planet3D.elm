@@ -1,27 +1,29 @@
 module Planet3D exposing (main)
 
-import WebGL exposing (Mesh, Shader)
-import Math.Vector3 exposing (Vec3, vec3, add, scale, normalize, length, dot)
-import Math.Matrix4 exposing (Mat4, makeRotate, mul, makeLookAt, makePerspective, inverseOrthonormal, transpose)
-import Random exposing (Generator)
-import AnimationFrame
-import Window
-import Html.Attributes exposing (width, height, style)
+import Browser
+import Browser.Dom exposing (getViewport)
+import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Html exposing (Html)
-import Time exposing (Time)
+import Html.Attributes as Attributes
+import Math.Matrix4 exposing (Mat4, inverseOrthonormal, makeLookAt, makePerspective, makeRotate, mul, transpose)
+import Math.Vector3 exposing (Vec3, add, dot, length, normalize, scale, vec3)
+import Random exposing (Generator)
 import Task
+import WebGL exposing (Mesh, Shader)
+
 
 
 {- Types -}
 
 
 type Action
-    = Resize Window.Size
-    | Animate Time
+    = Resize Float Float
+    | Animate Float
 
 
 type alias Model =
-    { size : Window.Size
+    { width : Float
+    , height : Float
     , angle : Float
     }
 
@@ -30,10 +32,10 @@ type alias Model =
 {- Program -}
 
 
-main : Program Never Model Action
+main : Program () Model Action
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , subscriptions = subscriptions
         , update = update
         , view = view
@@ -42,29 +44,34 @@ main =
 
 init : ( Model, Cmd Action )
 init =
-    ( { size = Window.Size 0 0
+    ( { width = 0
+      , height = 0
       , angle = 0
       }
-    , Task.perform Resize Window.size
+    , Task.perform (\{ viewport } -> Resize viewport.width viewport.height) getViewport
     )
 
 
 subscriptions : Model -> Sub Action
 subscriptions _ =
     Sub.batch
-        [ AnimationFrame.diffs Animate
-        , Window.resizes Resize
+        [ onAnimationFrameDelta Animate
+        , onResize (\w h -> Resize (toFloat w) (toFloat h))
         ]
 
 
 update : Action -> Model -> ( Model, Cmd Action )
 update action model =
     case action of
-        Resize size ->
-            { model | size = size } ! []
+        Resize width height ->
+            ( { model | width = width, height = height }
+            , Cmd.none
+            )
 
         Animate elapsed ->
-            { model | angle = model.angle + elapsed / 1000 } ! []
+            ( { model | angle = model.angle + elapsed / 1000 }
+            , Cmd.none
+            )
 
 
 
@@ -72,18 +79,21 @@ update action model =
 
 
 view : Model -> Html Action
-view { size, angle } =
+view { width, height, angle } =
     WebGL.toHtml
-        [ width size.width
-        , height size.height
-        , style [ ( "display", "block" ) ]
+        [ Attributes.width (round width)
+        , Attributes.height (round height)
+        , Attributes.style "display" "block"
+        , Attributes.style "position" "absolute"
+        , Attributes.style "left" "0"
+        , Attributes.style "top" "0"
         ]
         [ WebGL.entity
             vertexShader
             fragmentShader
             planet
             { rotation = makeRotate angle (vec3 0 1 0)
-            , perspective = makePerspective 45 (toFloat size.width / toFloat size.height) 0.01 100
+            , perspective = makePerspective 45 (width / height) 0.01 100
             , camera = makeLookAt (vec3 0 0 5) (vec3 0 0 0) (vec3 0 1 0)
             , normal = transpose (inverseOrthonormal (makeRotate angle (vec3 0 1 0)))
             }
@@ -124,6 +134,7 @@ planet =
         scaleV v =
             if length v < 1 then
                 normalize v |> scale 20
+
             else
                 scale 20 v
 
@@ -139,7 +150,7 @@ planet =
         randomTriangles =
             Random.step (surface 80 triangles) (Random.initialSeed 1) |> Tuple.first
     in
-        WebGL.triangles (List.map vec3ToVertex randomTriangles)
+    WebGL.triangles (List.map vec3ToVertex randomTriangles)
 
 
 
@@ -152,20 +163,22 @@ surface step triangles =
         scaleBy n m v =
             if dot n v > 0 then
                 scale (1 + m / 50) v
+
             else
                 scale (1 - m / 50) v
     in
-        Random.map2
-            (\n m -> (\( a, b, c ) -> ( scaleBy n m a, scaleBy n m b, scaleBy n m c )))
-            randomVec3
-            (Random.float -1 1)
-            |> Random.andThen
-                (\f ->
-                    if step <= 0 then
-                        succeed triangles
-                    else
-                        surface (step - 1) (List.map f triangles)
-                )
+    Random.map2
+        (\n m -> \( a, b, c ) -> ( scaleBy n m a, scaleBy n m b, scaleBy n m c ))
+        randomVec3
+        (Random.float -1 1)
+        |> Random.andThen
+            (\f ->
+                if step <= 0 then
+                    succeed triangles
+
+                else
+                    surface (step - 1) (List.map f triangles)
+            )
 
 
 
@@ -179,6 +192,7 @@ randomVec3 =
             (\v ->
                 if length v < 1 then
                     succeed v
+
                 else
                     randomVec3
             )
@@ -206,14 +220,17 @@ color v =
         c =
             len * 0.9
     in
-        if len <= 1 then
-            vec3 0 0 c
-        else if len < 1.1 then
-            vec3 0 (c / 1.1) 0
-        else if len < 1.17 then
-            vec3 (c / 2) (c / 5) (c / 10)
-        else
-            vec3 c c c
+    if len <= 1 then
+        vec3 0 0 c
+
+    else if len < 1.1 then
+        vec3 0 (c / 1.1) 0
+
+    else if len < 1.17 then
+        vec3 (c / 2) (c / 5) (c / 10)
+
+    else
+        vec3 c c c
 
 
 
@@ -224,6 +241,7 @@ divideSphere : Int -> List ( Vec3, Vec3, Vec3 ) -> List ( Vec3, Vec3, Vec3 )
 divideSphere step triangles =
     if step <= 0 then
         triangles
+
     else
         divideSphere (step - 1) (List.concatMap divide triangles)
 
@@ -250,7 +268,7 @@ divide ( v0, v1, v2 ) =
         c =
             add v1 v2 |> normalize
     in
-        [ ( v0, b, a ), ( b, v1, c ), ( a, b, c ), ( a, c, v2 ) ]
+    [ ( v0, b, a ), ( b, v1, c ), ( a, b, c ), ( a, c, v2 ) ]
 
 
 
@@ -280,7 +298,7 @@ vertexShader =
   uniform mat4 rotation;
   uniform mat4 normal;
   varying vec3 vcolor;
-  varying highp vec3 vlighting;
+  varying vec3 vlighting;
   void main () {
     gl_Position = perspective * camera * rotation * vec4(0.05 * position, 1.0);
     vcolor = color;
@@ -299,7 +317,7 @@ fragmentShader =
     [glsl|
   precision mediump float;
   varying vec3 vcolor;
-  varying highp vec3 vlighting;
+  varying vec3 vlighting;
   void main () {
     gl_FragColor = vec4(vcolor.rgb * vlighting, 1.0);
   }
