@@ -1,27 +1,28 @@
 module Tangram exposing (main)
 
-import AnimationFrame
+import Browser
+import Browser.Dom exposing (getViewport)
+import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Html exposing (Html)
-import Html.Attributes exposing (width, height, style)
-import Math.Matrix4 exposing (makeRotate, makeScale, makeTranslate, mul, Mat4)
+import Html.Attributes as Attributes exposing (style)
+import Math.Matrix4 exposing (Mat4, makeRotate, makeScale, makeTranslate, mul)
 import Math.Vector3 exposing (Vec3, vec3)
 import Tangram.Mesh as Mesh
-import Tangram.Shader as Shader exposing (Uniform, Varying, Attribute)
-import Tangram.Shape as Shape exposing (Shape, Position)
-import WebGL exposing (Entity, Mesh)
-import Window
-import Time exposing (Time)
+import Tangram.Shader as Shader exposing (Attribute, Uniform, Varying)
+import Tangram.Shape as Shape exposing (Position, Shape)
 import Task
+import WebGL exposing (Entity, Mesh)
 
 
 type Message
-    = Resize Window.Size
-    | Tick Time
+    = Resize Float Float
+    | Tick Float
 
 
 type alias Model =
-    { size : Window.Size
-    , time : Time
+    { width : Float
+    , height : Float
+    , time : Float
     }
 
 
@@ -37,11 +38,15 @@ shapes =
         |> (::) Shape.elm
 
 
-main : Program Never Model Message
+main : Program () Model Message
 main =
-    Html.program
-        { init = ( Model (Window.Size 0 0) 0, Task.perform Resize Window.size )
-        , view = \{ time, size } -> view size (time * 0.0005)
+    Browser.element
+        { init =
+            always
+                ( Model 0 0 0
+                , Task.perform (\{ viewport } -> Resize viewport.width viewport.height) getViewport
+                )
+        , view = \{ time, width, height } -> view width height (time * 0.0005)
         , update = update
         , subscriptions = subscriptions
         }
@@ -50,8 +55,8 @@ main =
 subscriptions : Model -> Sub Message
 subscriptions model =
     Sub.batch
-        [ AnimationFrame.diffs Tick
-        , Window.resizes Resize
+        [ onAnimationFrameDelta Tick
+        , onResize (\w h -> Resize (toFloat w) (toFloat h))
         ]
 
 
@@ -59,38 +64,40 @@ update : Message -> Model -> ( Model, Cmd Message )
 update message model =
     case message of
         Tick time ->
-            { model | time = model.time + time } ! []
+            ( { model | time = model.time + time }
+            , Cmd.none
+            )
 
-        Resize size ->
-            { model | size = size } ! []
+        Resize width height ->
+            ( { model | width = width, height = height }
+            , Cmd.none
+            )
 
 
-view : Window.Size -> Time -> Html Message
-view size t =
+view : Float -> Float -> Float -> Html Message
+view width height t =
     let
         shape =
             interpolate shapes t
 
         ratio =
-            toFloat size.width / toFloat size.height
+            width / height
     in
-        WebGL.toHtml
-            [ width (size.width * 2)
-            , height (size.height * 2)
-            , style
-                [ ( "transform", "scale(0.5)" )
-                , ( "transform-origin", "0 0" )
-                , ( "display", "block" )
-                ]
-            ]
-            [ render ratio Mesh.parallelepiped colors.green (scaleMat 1) shape.parallelepiped t
-            , render ratio Mesh.tetrahedron colors.orange (scaleMat 2) shape.orangeTetrahedron1 t
-            , render ratio Mesh.cube colors.green (scaleMat 2) shape.cube t
-            , render ratio Mesh.tetrahedron colors.orange (scaleMat 2) shape.orangeTetrahedron2 t
-            , render ratio Mesh.tetrahedron colors.gray (scaleMat 4) shape.grayTetrahedron t
-            , render ratio Mesh.tetrahedron colors.blue (scaleMat 4) shape.blueTetrahedron2 t
-            , render ratio Mesh.tetrahedron colors.blue (scaleMat (sqrt 2 * 2)) shape.blueTetrahedron1 t
-            ]
+    WebGL.toHtml
+        [ Attributes.width (round (width * 2))
+        , Attributes.height (round (height * 2))
+        , style "transform" "scale(0.5)"
+        , style "transform-origin" "0 0"
+        , style "display" "block"
+        ]
+        [ render ratio Mesh.parallelepiped colors.green (scaleMatrix 1) shape.parallelepiped t
+        , render ratio Mesh.tetrahedron colors.orange (scaleMatrix 2) shape.orangeTetrahedron1 t
+        , render ratio Mesh.cube colors.green (scaleMatrix 2) shape.cube t
+        , render ratio Mesh.tetrahedron colors.orange (scaleMatrix 2) shape.orangeTetrahedron2 t
+        , render ratio Mesh.tetrahedron colors.gray (scaleMatrix 4) shape.grayTetrahedron t
+        , render ratio Mesh.tetrahedron colors.blue (scaleMatrix 4) shape.blueTetrahedron2 t
+        , render ratio Mesh.tetrahedron colors.blue (scaleMatrix (sqrt 2 * 2)) shape.blueTetrahedron1 t
+        ]
 
 
 render : Float -> Mesh Attribute -> Vec3 -> Mat4 -> Position -> Float -> Entity
@@ -125,13 +132,13 @@ camera ratio =
         center =
             vec3 0 0 0
     in
-        mul (Math.Matrix4.makePerspective 45 ratio 0.01 100)
-            (Math.Matrix4.makeLookAt eye center Math.Vector3.j)
+    mul (Math.Matrix4.makePerspective 45 ratio 0.01 100)
+        (Math.Matrix4.makeLookAt eye center Math.Vector3.j)
 
 
 f : Float -> Float
 f t =
-    clamp_ ((cos t))
+    clamp_ (cos t)
 
 
 clamp_ : Float -> Float
@@ -140,27 +147,27 @@ clamp_ x =
 
 
 interpolate : List Shape -> Float -> Shape
-interpolate shapes t =
+interpolate shapesList t =
     let
         current =
             truncate (t / pi)
 
         shape1 =
-            shapes
-                |> List.drop (current % List.length shapes)
+            shapesList
+                |> List.drop (modBy (List.length shapes) current)
                 |> List.head
                 |> Maybe.withDefault Shape.default
 
         shape2 =
-            shapes
-                |> List.drop ((current + 1) % List.length shapes)
+            shapesList
+                |> List.drop (modBy (List.length shapes) (current + 1))
                 |> List.head
                 |> Maybe.withDefault Shape.default
 
         d =
             clamp_ (sin ((t - toFloat current * pi) / 2))
     in
-        Shape.morph d shape1 shape2
+    Shape.morph d shape1 shape2
 
 
 rotateMat : Float -> Float -> Float -> Mat4
@@ -169,8 +176,8 @@ rotateMat rotateZ rotateY t =
         |> mul (makeRotate (rotateY * pi / 180 + 2 * (1 - f t)) (vec3 0 1 0))
 
 
-scaleMat : Float -> Mat4
-scaleMat s =
+scaleMatrix : Float -> Mat4
+scaleMatrix s =
     makeScale (vec3 s s s)
 
 

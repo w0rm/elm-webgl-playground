@@ -1,7 +1,7 @@
-module Tangram.Shader exposing (Attribute, Varying, Uniform, vertex, fragment)
+module Tangram.Shader exposing (Attribute, Uniform, Varying, fragment, vertex)
 
-import Math.Vector3 exposing (Vec3)
 import Math.Matrix4 exposing (Mat4)
+import Math.Vector3 exposing (Vec3)
 import WebGL
 
 
@@ -30,7 +30,7 @@ vertex =
     [glsl|
     attribute vec3 position;
     attribute vec3 normal;
-    varying highp float vlighting;
+    varying float vlighting;
     uniform mat4 rotate;
     uniform mat4 scale;
     uniform mat4 translate;
@@ -51,7 +51,7 @@ fragment : WebGL.Shader {} Uniform Varying
 fragment =
     [glsl|
     precision mediump float;
-    varying highp float vlighting;
+    varying float vlighting;
     uniform vec3 color;
     void main () {
         gl_FragColor = vec4(color.rgb * vlighting, 1.0);

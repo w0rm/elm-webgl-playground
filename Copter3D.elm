@@ -1,26 +1,28 @@
 module Copter3D exposing (main)
 
-import WebGL exposing (Mesh, Shader)
-import Math.Vector3 exposing (Vec3, vec3, add, scale, normalize, length, dot)
-import Math.Matrix4 exposing (Mat4, makeRotate, mul, makeLookAt, makePerspective, inverseOrthonormal, transpose)
-import AnimationFrame
-import Window
-import Html.Attributes exposing (width, height, style)
+import Browser
+import Browser.Dom exposing (getViewport)
+import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Html exposing (Html)
-import Time exposing (Time)
+import Html.Attributes as Attributes
+import Math.Matrix4 exposing (Mat4, inverseOrthonormal, makeLookAt, makePerspective, makeRotate, mul, transpose)
+import Math.Vector3 exposing (Vec3, add, dot, length, normalize, scale, vec3)
 import Task
+import WebGL exposing (Mesh, Shader)
+
 
 
 {- Types -}
 
 
 type Action
-    = Resize Window.Size
-    | Animate Time
+    = Resize Float Float
+    | Animate Float
 
 
 type alias Model =
-    { size : Window.Size
+    { width : Float
+    , height : Float
     , angle : Float
     }
 
@@ -29,10 +31,10 @@ type alias Model =
 {- Program -}
 
 
-main : Program Never Model Action
+main : Program () Model Action
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , subscriptions = subscriptions
         , update = update
         , view = view
@@ -41,29 +43,34 @@ main =
 
 init : ( Model, Cmd Action )
 init =
-    ( { size = Window.Size 0 0
+    ( { width = 0
+      , height = 0
       , angle = 0
       }
-    , Task.perform Resize Window.size
+    , Task.perform (\{ viewport } -> Resize viewport.width viewport.height) getViewport
     )
 
 
 subscriptions : Model -> Sub Action
 subscriptions _ =
     Sub.batch
-        [ AnimationFrame.diffs Animate
-        , Window.resizes Resize
+        [ onAnimationFrameDelta Animate
+        , onResize (\w h -> Resize (toFloat w) (toFloat h))
         ]
 
 
 update : Action -> Model -> ( Model, Cmd Action )
 update action model =
     case action of
-        Resize size ->
-            { model | size = size } ! []
+        Resize width height ->
+            ( { model | width = width, height = height }
+            , Cmd.none
+            )
 
         Animate elapsed ->
-            { model | angle = model.angle + elapsed / 100 } ! []
+            ( { model | angle = model.angle + elapsed / 100 }
+            , Cmd.none
+            )
 
 
 
@@ -71,21 +78,24 @@ update action model =
 
 
 view : Model -> Html Action
-view { size, angle } =
+view { width, height, angle } =
     WebGL.toHtml
-        [ width size.width
-        , height size.height
-        , style [ ( "display", "block" ) ]
+        [ Attributes.width (round width)
+        , Attributes.height (round height)
+        , Attributes.style "display" "block"
+        , Attributes.style "position" "absolute"
+        , Attributes.style "left" "0"
+        , Attributes.style "top" "0"
         ]
-        [ WebGL.entity vertexShader fragmentShader copter (uniforms size (angle / 10))
-        , WebGL.entity vertexShader fragmentShader blade (uniforms size (angle / 10 - angle))
+        [ WebGL.entity vertexShader fragmentShader copter (uniforms width height (angle / 10))
+        , WebGL.entity vertexShader fragmentShader blade (uniforms width height (angle / 10 - angle))
         ]
 
 
-uniforms : Window.Size -> Float -> Uniform
-uniforms { width, height } angle =
+uniforms : Float -> Float -> Float -> Uniform
+uniforms width height angle =
     { rotation = makeRotate angle (vec3 0 1 0)
-    , perspective = makePerspective 45 (toFloat width / toFloat height) 0.01 100
+    , perspective = makePerspective 45 (width / height) 0.01 100
     , camera = makeLookAt (vec3 0 0 5) (vec3 0 0 0) (vec3 0 1 0)
     }
 

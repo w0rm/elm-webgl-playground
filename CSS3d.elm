@@ -1,33 +1,37 @@
 module CSS3D exposing (main)
 
+import Browser
+import Browser.Dom exposing (getViewport)
+import Browser.Events exposing (onAnimationFrameDelta, onMouseMove, onResize)
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (height, style, width)
+import Html.Attributes as Attributes exposing (style)
+import Json.Decode as Decode exposing (Decoder, Value)
 import Math.Matrix4 as Mat4 exposing (Mat4, translate3)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Math.Vector4 as Vec4 exposing (Vec4, vec4)
-import Mouse
 import Task exposing (Task)
 import WebGL exposing (Entity, Mesh, Shader)
 import WebGL.Settings as Settings
 import WebGL.Settings.DepthTest as DepthTest
-import Window
 
 
 type alias Model =
-    { size : Window.Size
-    , position : Mouse.Position
+    { width : Float
+    , height : Float
+    , left : Float
+    , top : Float
     }
 
 
 type Action
-    = Resize Window.Size
-    | MouseMove Mouse.Position
+    = Resize Float Float
+    | MouseMove Float Float
 
 
-main : Program Never Model Action
+main : Program () Model Action
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , view = view
         , subscriptions = subscriptions
         , update = update
@@ -36,29 +40,38 @@ main =
 
 init : ( Model, Cmd Action )
 init =
-    ( { size = Window.Size 0 0
-      , position = Mouse.Position 0 0
+    ( { width = 0
+      , height = 0
+      , left = 0
+      , top = 0
       }
-    , Task.perform Resize Window.size
+    , Task.perform (\{ viewport } -> Resize viewport.width viewport.height) getViewport
     )
 
 
 subscriptions : Model -> Sub Action
 subscriptions _ =
     Sub.batch
-        [ Window.resizes Resize
-        , Mouse.moves MouseMove
+        [ onMouseMove mousePosition
+        , onResize (\w h -> Resize (toFloat w) (toFloat h))
         ]
+
+
+mousePosition : Decoder Action
+mousePosition =
+    Decode.map2 MouseMove
+        (Decode.field "pageX" Decode.float)
+        (Decode.field "pageY" Decode.float)
 
 
 update : Action -> Model -> ( Model, Cmd Action )
 update action model =
     case action of
-        Resize size ->
-            ( { model | size = size }, Cmd.none )
+        Resize width height ->
+            ( { model | width = width, height = height }, Cmd.none )
 
-        MouseMove position ->
-            ( { model | position = position }, Cmd.none )
+        MouseMove left top ->
+            ( { model | left = left, top = top }, Cmd.none )
 
 
 
@@ -100,7 +113,7 @@ rotatedSquare color ( angleXZ, angleYZ ) =
         transformTriangle ( a, b, c ) =
             ( transform a, transform b, transform c )
     in
-        List.map transformTriangle (square 100 color)
+    List.map transformTriangle (square 100 color)
 
 
 square : Float -> Vec4 -> List ( Vertex, Vertex, Vertex )
@@ -118,9 +131,9 @@ square scale color =
         bottomRight =
             Vertex (vec3 scale -scale scale) color
     in
-        [ ( topLeft, topRight, bottomLeft )
-        , ( bottomLeft, topRight, bottomRight )
-        ]
+    [ ( topLeft, topRight, bottomLeft )
+    , ( bottomLeft, topRight, bottomRight )
+    ]
 
 
 
@@ -128,10 +141,10 @@ square scale color =
 
 
 view : Model -> Html Action
-view { size, position } =
+view { width, height, left, top } =
     let
         eye =
-            vec3 (1 - 2 * toFloat position.x / toFloat size.width) -(1 - 2 * toFloat position.y / toFloat size.height) 1
+            vec3 (1 - 2 * left / width) -(1 - 2 * top / height) 1
                 |> Vec3.normalize
                 |> Vec3.scale 600
 
@@ -139,7 +152,7 @@ view { size, position } =
             Mat4.makeLookAt eye (vec3 0 0 0) Vec3.j
 
         perspective =
-            Mat4.makePerspective 45 (toFloat size.width / toFloat size.height) 1 10000
+            Mat4.makePerspective 45 (width / height) 1 10000
 
         webglMat =
             Mat4.mul perspective lookAt
@@ -148,40 +161,41 @@ view { size, position } =
             lookAt
 
         fov =
-            toFloat size.height / 2 / (tan (degrees (45 * 0.5)))
+            height / 2 / tan (degrees (45 * 0.5))
     in
-        div
-            [ style
-                [ ( "position", "absolute" )
-                , ( "transform-style", "preserve-3d" )
-                , ( "perspective", toString fov ++ "px" )
-                , ( "overflow", "hidden" )
-                , ( "width", toString size.width ++ "px" )
-                , ( "height", toString size.height ++ "px" )
-                ]
+    div
+        [ style "position" "absolute"
+        , Attributes.style "left" "0"
+        , Attributes.style "top" "0"
+        , style "transform-style" "preserve-3d"
+        , style "perspective" (String.fromFloat fov ++ "px")
+        , style "overflow" "hidden"
+        , style "width" (String.fromFloat width ++ "px")
+        , style "height" (String.fromFloat height ++ "px")
+        ]
+        [ camera
+            fov
+            width
+            height
+            css3dMat
+            [ box 200 200 (Mat4.makeTranslate3 0 0 100) ]
+        , WebGL.toHtml
+            [ Attributes.width (round width)
+            , Attributes.height (round height)
+            , Attributes.style "position" "absolute"
+            , Attributes.style "left" "0"
+            , Attributes.style "top" "0"
             ]
-            [ camera
-                fov
-                size
-                css3dMat
-                [ box 200 200 (Mat4.makeTranslate3 0 0 100) ]
-            , WebGL.toHtml
-                [ width size.width
-                , height size.height
-                , style
-                    [ ( "position", "absolute" )
-                    ]
-                ]
-                [ WebGL.entityWith [ DepthTest.default, Settings.colorMask False False False False ] vertexShader fragmentShader faceMesh { perspective = webglMat }
-                , WebGL.entity vertexShader fragmentShader sidesMesh { perspective = webglMat }
-                ]
+            [ WebGL.entityWith [ DepthTest.default, Settings.colorMask False False False False ] vertexShader fragmentShader faceMesh { perspective = webglMat }
+            , WebGL.entity vertexShader fragmentShader sidesMesh { perspective = webglMat }
             ]
+        ]
 
 
 cameraMatrix3d : { m11 : Float, m21 : Float, m31 : Float, m41 : Float, m12 : Float, m22 : Float, m32 : Float, m42 : Float, m13 : Float, m23 : Float, m33 : Float, m43 : Float, m14 : Float, m24 : Float, m34 : Float, m44 : Float } -> String
 cameraMatrix3d { m11, m21, m31, m41, m12, m22, m32, m42, m13, m23, m33, m43, m14, m24, m34, m44 } =
     [ m11, -m21, m31, m41, m12, -m22, m32, m42, m13, -m23, m33, m43, m14, -m24, m34, m44 ]
-        |> List.map toString
+        |> List.map String.fromFloat
         |> List.intersperse ","
         |> List.foldr (++) ""
         |> (\s -> "matrix3d(" ++ s ++ ")")
@@ -190,7 +204,7 @@ cameraMatrix3d { m11, m21, m31, m41, m12, m22, m32, m42, m13, m23, m33, m43, m14
 objectMatrix3d : { m11 : Float, m21 : Float, m31 : Float, m41 : Float, m12 : Float, m22 : Float, m32 : Float, m42 : Float, m13 : Float, m23 : Float, m33 : Float, m43 : Float, m14 : Float, m24 : Float, m34 : Float, m44 : Float } -> String
 objectMatrix3d { m11, m21, m31, m41, m12, m22, m32, m42, m13, m23, m33, m43, m14, m24, m34, m44 } =
     [ m11, m21, m31, m41, -m12, -m22, -m32, -m42, m13, m23, m33, m43, m14, m24, m34, m44 ]
-        |> List.map toString
+        |> List.map String.fromFloat
         |> List.intersperse ","
         |> List.foldr (++) ""
         |> (\s -> "matrix3d(" ++ s ++ ")")
@@ -199,42 +213,36 @@ objectMatrix3d { m11, m21, m31, m41, m12, m22, m32, m42, m13, m23, m33, m43, m14
 box : Float -> Float -> Mat4 -> Html Action
 box width height matrix =
     div
-        [ style
-            [ ( "position", "absolute" )
-            , ( "background-color", "red" )
-            , ( "transform-style", "preserve-3d" )
-            , ( "width", toString width ++ "px" )
-            , ( "height", toString height ++ "px" )
-            , ( "transform"
-              , "translate3d(-50%, -50%, 0) " ++ objectMatrix3d (Mat4.toRecord matrix)
-              )
-            ]
+        [ style "position" "absolute"
+        , style "background-color" "red"
+        , style "transform-style" "preserve-3d"
+        , style "width" (String.fromFloat width ++ "px")
+        , style "height" (String.fromFloat height ++ "px")
+        , style "transform" ("translate3d(-50%, -50%, 0) " ++ objectMatrix3d (Mat4.toRecord matrix))
         ]
         [ text "OH WOW, I'm a DIV in the WebGL space!" ]
 
 
-camera : Float -> Window.Size -> Mat4 -> List (Html Action) -> Html Action
-camera fov { width, height } matrix =
+camera : Float -> Float -> Float -> Mat4 -> List (Html Action) -> Html Action
+camera fov width height matrix =
     div
-        [ style
-            [ ( "position", "absolute" )
-            , ( "transform-style", "preserve-3d" )
-            , ( "width", toString width ++ "px" )
-            , ( "height", toString height ++ "px" )
-            , ( "transform"
-              , ""
-                    ++ "translate3d(0,0,"
-                    ++ toString fov
-                    ++ "px)"
-                    ++ cameraMatrix3d (Mat4.toRecord matrix)
-                    ++ "translate3d("
-                    ++ toString (toFloat width / 2)
-                    ++ "px,"
-                    ++ toString (toFloat height / 2)
-                    ++ "px,"
-                    ++ "0)"
-              )
-            ]
+        [ style "position" "absolute"
+        , style "transform-style" "preserve-3d"
+        , style "width" (String.fromFloat width ++ "px")
+        , style "height" (String.fromFloat height ++ "px")
+        , style "transform"
+            (""
+                ++ "translate3d(0,0,"
+                ++ String.fromFloat fov
+                ++ "px)"
+                ++ cameraMatrix3d (Mat4.toRecord matrix)
+                ++ "translate3d("
+                ++ String.fromFloat (width / 2)
+                ++ "px,"
+                ++ String.fromFloat (height / 2)
+                ++ "px,"
+                ++ "0)"
+            )
         ]
 
 

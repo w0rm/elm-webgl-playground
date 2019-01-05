@@ -1,16 +1,15 @@
-module Tangram.Shape
-    exposing
-        ( elm
-        , elmBerlin
-        , elmWeekly
-        , elmLive
-        , elmCommunity
-        , elmBridge
-        , default
-        , morph
-        , Shape
-        , Position
-        )
+module Tangram.Shape exposing
+    ( Position
+    , Shape
+    , default
+    , elm
+    , elmBerlin
+    , elmBridge
+    , elmCommunity
+    , elmLive
+    , elmWeekly
+    , morph
+    )
 
 
 type alias Position =

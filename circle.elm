@@ -7,23 +7,23 @@ module Circle exposing (main)
    http://www.geeks3d.com/20130705/shader-library-circle-disc-fake-sphere-in-glsl-opengl-glslhacker/
 -}
 
-import AnimationFrame
+import Browser
+import Browser.Events exposing (onAnimationFrameDelta)
 import Html exposing (Html)
-import Html.Attributes exposing (width, height, style)
+import Html.Attributes exposing (height, style, width)
 import Math.Matrix4 as Mat4 exposing (Mat4)
-import Math.Vector3 exposing (vec3, Vec3)
 import Math.Vector2 exposing (Vec2)
-import Time exposing (Time)
+import Math.Vector3 exposing (Vec3, vec3)
 import WebGL exposing (Mesh, Shader)
 
 
-main : Program Never Time Time
+main : Program () Float Float
 main =
-    Html.program
-        { init = ( 0, Cmd.none )
+    Browser.element
+        { init = always ( 0, Cmd.none )
         , view = view
-        , subscriptions = (\model -> AnimationFrame.diffs Basics.identity)
-        , update = (\elapsed currentTime -> ( elapsed + currentTime, Cmd.none ))
+        , subscriptions = \model -> onAnimationFrameDelta Basics.identity
+        , update = \elapsed currentTime -> ( elapsed + currentTime, Cmd.none )
         }
 
 
@@ -32,7 +32,7 @@ view t =
     WebGL.toHtml
         [ width 400
         , height 400
-        , style [ ( "display", "block" ) ]
+        , style "display" "block"
         ]
         [ WebGL.entity
             vertexShader

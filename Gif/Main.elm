@@ -1,16 +1,16 @@
 port module Main exposing (main)
 
 import AnimationFrame
-import Mouse
-import Html exposing (Html, div, text, img)
-import Html.Attributes exposing (width, height, style, id, src)
+import Dict exposing (Dict)
+import Html exposing (Html, div, img, text)
+import Html.Attributes exposing (height, id, src, style, width)
+import Json.Decode as Decode
+import Json.Encode as Encode exposing (Value)
 import Math.Matrix4 as Mat4 exposing (Mat4)
-import Math.Vector3 as Vec3 exposing (vec3, Vec3)
+import Math.Vector3 as Vec3 exposing (Vec3, vec3)
+import Mouse
 import Time exposing (Time)
 import WebGL exposing (Mesh, Shader)
-import Json.Encode as Encode exposing (Value)
-import Json.Decode as Decode
-import Dict exposing (Dict)
 
 
 port gifOut : Value -> Cmd msg
@@ -141,7 +141,7 @@ update msg model =
                         |> Maybe.map (\r -> { r | progress = progress })
                         |> Maybe.withDefault { progress = progress, url = Nothing }
             in
-                ( { model | recordings = Dict.insert id recording model.recordings }, Cmd.none )
+            ( { model | recordings = Dict.insert id recording model.recordings }, Cmd.none )
 
         Finished id url ->
             ( { model | recordings = Dict.insert id { progress = 100, url = Just url } model.recordings }, Cmd.none )
@@ -168,12 +168,12 @@ startRecording model =
             , url = Nothing
             }
     in
-        ( { model
-            | recording = Just id
-            , recordings = Dict.insert id recording model.recordings
-          }
-        , sendToPort (StartRecording id)
-        )
+    ( { model
+        | recording = Just id
+        , recordings = Dict.insert id recording model.recordings
+      }
+    , sendToPort (StartRecording id)
+    )
 
 
 addFrame : Time -> Model -> ( Model, Cmd Msg )
@@ -182,12 +182,12 @@ addFrame delta model =
         newModel =
             { model | elapsed = model.elapsed + delta }
     in
-        case model.recording of
-            Just id ->
-                ( newModel, sendToPort (AddFrame id "canvas" delta) )
+    case model.recording of
+        Just id ->
+            ( newModel, sendToPort (AddFrame id "canvas" delta) )
 
-            Nothing ->
-                ( newModel, Cmd.none )
+        Nothing ->
+            ( newModel, Cmd.none )
 
 
 stopRecording : Model -> ( Model, Cmd Msg )
@@ -205,10 +205,8 @@ stopRecording model =
 view : Model -> Html Msg
 view model =
     div
-        [ style
-            [ ( "display", "flex" )
-            , ( "flex-wrap", "wrap" )
-            ]
+        [ style "display" "flex"
+        , style "flex-wrap" "wrap"
         ]
         (WebGL.toHtml
             [ width 200
@@ -222,7 +220,7 @@ view model =
                 mesh
                 { perspective = perspective (model.elapsed / 1000) }
             ]
-            :: (List.map recording (Dict.toList model.recordings))
+            :: List.map recording (Dict.toList model.recordings)
         )
 
 
@@ -237,6 +235,7 @@ recording ( _, { progress, url } ) =
             Nothing ->
                 if progress == 0 then
                     div [] [ text "Recording" ]
+
                 else
                     div [] [ text ("Encoding: " ++ toString (round (progress * 100)) ++ "%") ]
         ]
