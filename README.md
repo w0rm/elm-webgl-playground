@@ -1,10 +1,16 @@
 # elm-webgl-playground
 
+## osloelmday.elm
+
+A demo similar to Oslo Elm Day 2019, but implemented in Elm instead of Three.js.
+
+[![Demo](screenshots/osloelmday.gif)](https://unsoundscapes.com/elm-webgl-playground/osloelmday.html)
+
 ## circle.elm
 
 Draws a circle in the fragment shader.
 
-[![Demo](screenshots/circle.png)](http://unsoundscapes.com/elm-webgl-playground/circle.html)
+[![Demo](screenshots/circle.png)](https://unsoundscapes.com/elm-webgl-playground/circle.html)
 
 ## shadertoy.elm
 
@@ -50,7 +56,7 @@ This renders an animated object at the mouse position:
 
 [![Demo](screenshots/animation2d.gif)](http://unsoundscapes.com/elm-webgl-playground/animation2d.html)
 
-Special thanks to [Kolja](https://github.com/kolja) for the awesome illustration.  
+Special thanks to [Kolja](https://github.com/kolja) for the awesome illustration.
 Please check our WebGL game [Elm Street 404](https://github.com/zalando/elm-street-404).
 
 
