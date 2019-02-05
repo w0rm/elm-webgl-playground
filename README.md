@@ -57,7 +57,7 @@ This renders an animated object at the mouse position:
 [![Demo](screenshots/animation2d.gif)](http://unsoundscapes.com/elm-webgl-playground/animation2d.html)
 
 Special thanks to [Kolja](https://github.com/kolja) for the awesome illustration.
-Please check our WebGL game [Elm Street 404](https://github.com/zalando/elm-street-404).
+Please check our WebGL game [Elm Street 404](https://github.com/w0rm/elm-street-404).
 
 
 ## Instructions to run
