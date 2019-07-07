@@ -5,8 +5,8 @@ import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Html exposing (Html)
 import Html.Attributes as Attributes
-import Math.Matrix4 exposing (Mat4, inverseOrthonormal, makeLookAt, makePerspective, makeRotate, mul, transpose)
-import Math.Vector3 exposing (Vec3, add, dot, length, normalize, scale, vec3)
+import Math.Matrix4 exposing (Mat4, makeLookAt, makePerspective, makeRotate)
+import Math.Vector3 exposing (Vec3, vec3)
 import Task
 import WebGL exposing (Mesh, Shader)
 
@@ -117,12 +117,7 @@ type alias Uniform =
     }
 
 
-type alias Varying =
-    { vcolor : Vec3
-    }
-
-
-vertexShader : Shader Vertex Uniform Varying
+vertexShader : Shader Vertex Uniform { vcolor : Vec3 }
 vertexShader =
     [glsl|
   attribute vec3 position;
@@ -138,7 +133,7 @@ vertexShader =
 |]
 
 
-fragmentShader : Shader {} Uniform Varying
+fragmentShader : Shader {} Uniform { vcolor : Vec3 }
 fragmentShader =
     [glsl|
   precision mediump float;

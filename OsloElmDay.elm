@@ -2,20 +2,16 @@ module OsloElmDay exposing (main)
 
 import Browser
 import Browser.Dom exposing (getViewport)
-import Browser.Events exposing (onAnimationFrameDelta, onMouseMove, onResize)
-import Html exposing (Html, div, text)
+import Browser.Events exposing (onAnimationFrameDelta, onResize)
+import Html exposing (Html)
 import Html.Attributes as Attributes exposing (style)
-import Json.Decode as Decode exposing (Decoder, Value)
-import Math.Matrix4 as Mat4 exposing (Mat4, translate3)
+import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
-import Math.Vector4 as Vec4 exposing (Vec4, vec4)
 import OsloElmDay.Mesh as Mesh
 import OsloElmDay.Shader as Shader exposing (Attributes)
 import Random exposing (Generator)
-import Task exposing (Task)
+import Task
 import WebGL exposing (Entity, Mesh)
-import WebGL.Settings as Settings
-import WebGL.Settings.DepthTest as DepthTest
 
 
 speed : Float
@@ -158,7 +154,7 @@ main =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Animate time ->
+        Animate _ ->
             ( { model | delta = model.delta + speed }
             , Cmd.none
             )

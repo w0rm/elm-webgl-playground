@@ -8,10 +8,10 @@ import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onMouseDown, onMouseMove, onMouseUp, onResize)
 import Html exposing (Html, a, div, text)
 import Html.Attributes as Attributes exposing (href, style)
-import Json.Decode as Decode exposing (Decoder, Value)
-import Math.Vector2 as Vec2 exposing (Vec2)
-import Math.Vector3 as Vec3 exposing (Vec3, vec3)
-import Math.Vector4 as Vec4 exposing (Vec4, vec4)
+import Json.Decode as Decode exposing (Decoder)
+import Math.Vector2 exposing (Vec2)
+import Math.Vector3 exposing (Vec3, vec3)
+import Math.Vector4 exposing (Vec4, vec4)
 import Task
 import WebGL exposing (Mesh, Shader)
 
@@ -131,21 +131,16 @@ view { width, height, left, top, time } =
 -- Mesh
 
 
-type alias Vertex =
-    { position : Vec3
-    }
-
-
-mesh : Mesh Vertex
+mesh : Mesh { position : Vec3 }
 mesh =
     WebGL.triangles
-        [ ( Vertex (vec3 -1 1 0)
-          , Vertex (vec3 1 1 0)
-          , Vertex (vec3 -1 -1 0)
+        [ ( { position = vec3 -1 1 0 }
+          , { position = vec3 1 1 0 }
+          , { position = vec3 -1 -1 0 }
           )
-        , ( Vertex (vec3 -1 -1 0)
-          , Vertex (vec3 1 1 0)
-          , Vertex (vec3 1 -1 0)
+        , ( { position = vec3 -1 -1 0 }
+          , { position = vec3 1 1 0 }
+          , { position = vec3 1 -1 0 }
           )
         ]
 
@@ -161,7 +156,7 @@ type alias Uniforms =
     }
 
 
-vertexShader : Shader Vertex Uniforms { vFragCoord : Vec2 }
+vertexShader : Shader { position : Vec3 } Uniforms { vFragCoord : Vec2 }
 vertexShader =
     [glsl|
 

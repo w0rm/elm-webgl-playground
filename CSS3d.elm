@@ -2,15 +2,15 @@ module CSS3D exposing (main)
 
 import Browser
 import Browser.Dom exposing (getViewport)
-import Browser.Events exposing (onAnimationFrameDelta, onMouseMove, onResize)
+import Browser.Events exposing (onMouseMove, onResize)
 import Html exposing (Html, div, text)
 import Html.Attributes as Attributes exposing (style)
-import Json.Decode as Decode exposing (Decoder, Value)
-import Math.Matrix4 as Mat4 exposing (Mat4, translate3)
+import Json.Decode as Decode exposing (Decoder)
+import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
-import Math.Vector4 as Vec4 exposing (Vec4, vec4)
-import Task exposing (Task)
-import WebGL exposing (Entity, Mesh, Shader)
+import Math.Vector4 exposing (Vec4, vec4)
+import Task
+import WebGL exposing (Mesh, Shader)
 import WebGL.Settings as Settings
 import WebGL.Settings.DepthTest as DepthTest
 
@@ -250,12 +250,7 @@ camera fov width height matrix =
 -- SHADERS
 
 
-type alias Uniforms =
-    { perspective : Mat4
-    }
-
-
-vertexShader : Shader Vertex Uniforms { vcolor : Vec4 }
+vertexShader : Shader Vertex { perspective : Mat4 } { vcolor : Vec4 }
 vertexShader =
     [glsl|
 
@@ -272,7 +267,7 @@ vertexShader =
     |]
 
 
-fragmentShader : Shader {} Uniforms { vcolor : Vec4 }
+fragmentShader : Shader {} { perspective : Mat4 } { vcolor : Vec4 }
 fragmentShader =
     [glsl|
 

@@ -5,8 +5,8 @@ module OsloElmDay.Shader exposing
     , vertex
     )
 
-import Math.Matrix4 as Mat4 exposing (Mat4)
-import Math.Vector3 as Vec3 exposing (Vec3)
+import Math.Matrix4 exposing (Mat4)
+import Math.Vector3 exposing (Vec3)
 import WebGL exposing (Shader)
 
 
@@ -25,11 +25,7 @@ type alias Uniforms =
     }
 
 
-type alias Varyings =
-    { vlighting : Float }
-
-
-vertex : Shader Attributes Uniforms Varyings
+vertex : Shader Attributes Uniforms { vlighting : Float }
 vertex =
     [glsl|
         attribute vec3 position;
@@ -51,7 +47,7 @@ vertex =
     |]
 
 
-fragment : Shader {} Uniforms Varyings
+fragment : Shader {} Uniforms { vlighting : Float }
 fragment =
     [glsl|
         precision mediump float;

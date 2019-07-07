@@ -5,10 +5,10 @@ import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onMouseMove, onResize)
 import Html exposing (Html)
 import Html.Attributes as Attributes
-import Json.Decode as Decode exposing (Decoder, Value)
+import Json.Decode as Decode exposing (Decoder)
 import Math.Vector2 exposing (Vec2, vec2)
-import Task exposing (Task)
-import WebGL exposing (Mesh, Shader)
+import Task
+import WebGL exposing (Mesh)
 import WebGL.Settings.Blend as Blend
 import WebGL.Texture as Texture exposing (Error, Texture)
 
@@ -173,20 +173,16 @@ view { width, height, left, top, maybeTexture, frame } =
 {- Mesh and shaders -}
 
 
-type alias Vertex =
-    { position : Vec2 }
-
-
-mesh : Mesh Vertex
+mesh : Mesh { position : Vec2 }
 mesh =
     WebGL.triangles
-        [ ( Vertex (vec2 0 0)
-          , Vertex (vec2 64 128)
-          , Vertex (vec2 64 0)
+        [ ( { position = vec2 0 0 }
+          , { position = vec2 64 128 }
+          , { position = vec2 64 0 }
           )
-        , ( Vertex (vec2 0 0)
-          , Vertex (vec2 0 128)
-          , Vertex (vec2 64 128)
+        , ( { position = vec2 0 0 }
+          , { position = vec2 0 128 }
+          , { position = vec2 64 128 }
           )
         ]
 

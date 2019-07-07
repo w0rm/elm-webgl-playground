@@ -5,7 +5,7 @@ import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Html exposing (Html)
 import Html.Attributes as Attributes
-import Math.Matrix4 exposing (Mat4, inverseOrthonormal, makeLookAt, makePerspective, makeRotate, mul, transpose)
+import Math.Matrix4 exposing (Mat4, inverseOrthonormal, makeLookAt, makePerspective, makeRotate, transpose)
 import Math.Vector3 exposing (Vec3, add, dot, length, normalize, scale, vec3)
 import Random exposing (Generator)
 import Task

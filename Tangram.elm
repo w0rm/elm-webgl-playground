@@ -8,7 +8,7 @@ import Html.Attributes as Attributes exposing (style)
 import Math.Matrix4 exposing (Mat4, makeRotate, makeScale, makeTranslate, mul)
 import Math.Vector3 exposing (Vec3, vec3)
 import Tangram.Mesh as Mesh
-import Tangram.Shader as Shader exposing (Attribute, Uniform, Varying)
+import Tangram.Shader as Shader exposing (Attribute, Uniform)
 import Tangram.Shape as Shape exposing (Position, Shape)
 import Task
 import WebGL exposing (Entity, Mesh)
@@ -53,7 +53,7 @@ main =
 
 
 subscriptions : Model -> Sub Message
-subscriptions model =
+subscriptions _ =
     Sub.batch
         [ onAnimationFrameDelta Tick
         , onResize (\w h -> Resize (toFloat w) (toFloat h))

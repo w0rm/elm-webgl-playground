@@ -1,4 +1,4 @@
-module Tangram.Shader exposing (Attribute, Uniform, Varying, fragment, vertex)
+module Tangram.Shader exposing (Attribute, Uniform, fragment, vertex)
 
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 exposing (Vec3)
@@ -11,11 +11,6 @@ type alias Attribute =
     }
 
 
-type alias Varying =
-    { vlighting : Float
-    }
-
-
 type alias Uniform =
     { color : Vec3
     , rotate : Mat4
@@ -25,7 +20,7 @@ type alias Uniform =
     }
 
 
-vertex : WebGL.Shader Attribute Uniform Varying
+vertex : WebGL.Shader Attribute Uniform { vlighting : Float }
 vertex =
     [glsl|
     attribute vec3 position;
@@ -47,7 +42,7 @@ vertex =
 |]
 
 
-fragment : WebGL.Shader {} Uniform Varying
+fragment : WebGL.Shader {} Uniform { vlighting : Float }
 fragment =
     [glsl|
     precision mediump float;

@@ -37,11 +37,6 @@ sqrt2 =
     sqrt 2
 
 
-sqrtsqrt2 : Float
-sqrtsqrt2 =
-    sqrt sqrt2
-
-
 defaultPosition : Position
 defaultPosition =
     Position 0 0 0 0 0

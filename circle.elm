@@ -22,7 +22,7 @@ main =
     Browser.element
         { init = always ( 0, Cmd.none )
         , view = view
-        , subscriptions = \model -> onAnimationFrameDelta Basics.identity
+        , subscriptions = \_ -> onAnimationFrameDelta Basics.identity
         , update = \elapsed currentTime -> ( elapsed + currentTime, Cmd.none )
         }
 
@@ -48,21 +48,16 @@ view t =
 -- Mesh
 
 
-type alias Vertex =
-    { position : Vec3
-    }
-
-
-mesh : Mesh Vertex
+mesh : Mesh { position : Vec3 }
 mesh =
     WebGL.triangles
-        [ ( Vertex (vec3 -1 1 0)
-          , Vertex (vec3 1 1 0)
-          , Vertex (vec3 -1 -1 0)
+        [ ( { position = vec3 -1 1 0 }
+          , { position = vec3 1 1 0 }
+          , { position = vec3 -1 -1 0 }
           )
-        , ( Vertex (vec3 -1 -1 0)
-          , Vertex (vec3 1 1 0)
-          , Vertex (vec3 1 -1 0)
+        , ( { position = vec3 -1 -1 0 }
+          , { position = vec3 1 1 0 }
+          , { position = vec3 1 -1 0 }
           )
         ]
 
@@ -71,16 +66,7 @@ mesh =
 -- Shaders
 
 
-type alias Uniforms =
-    { transform : Mat4 }
-
-
-type alias Varyings =
-    { vposition : Vec2
-    }
-
-
-vertexShader : Shader Vertex Uniforms Varyings
+vertexShader : Shader { position : Vec3 } { transform : Mat4 } { vposition : Vec2 }
 vertexShader =
     [glsl|
 
@@ -96,7 +82,7 @@ vertexShader =
     |]
 
 
-fragmentShader : Shader {} Uniforms Varyings
+fragmentShader : Shader {} { transform : Mat4 } { vposition : Vec2 }
 fragmentShader =
     [glsl|
 
