@@ -1,34 +1,34 @@
-module ShadowVolume exposing (main, meshEdges, boxVertices, boxFaces)
+module ShadowVolume exposing (boxFaces, boxVertices, main, meshEdges)
 
 {-
    Rendering shadows using the Shadow Volume technique:
    https://en.wikipedia.org/wiki/Shadow_volume
 -}
 
+import Array exposing (Array)
 import Browser
 import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onResize)
+import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes as Attributes exposing (style)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Task
-import Dict exposing (Dict)
 import WebGL exposing (Mesh, Shader)
-import Array exposing (Array)
 import WebGL.Settings as Settings
 import WebGL.Settings.DepthTest as DepthTest
 
 
 type alias Model =
     { width : Float
-    , height : Float 
+    , height : Float
     }
 
 
 type alias Vertex =
     { position : Vec3
-    , normal: Vec3
+    , normal : Vec3
     }
 
 
@@ -37,12 +37,14 @@ type alias Face =
     , normal : Vec3
     }
 
+
 type alias Edge =
     { start : Vec3
     , end : Vec3
     , leftNormal : Vec3
-    , rightNormal: Vec3
+    , rightNormal : Vec3
     }
+
 
 type alias CollectedNormals =
     { leftNormals : Dict ( Int, Int ) Vec3
@@ -51,16 +53,17 @@ type alias CollectedNormals =
 
 
 collectEdgeNormals : Face -> CollectedNormals -> CollectedNormals
-collectEdgeNormals  face collectedNormals =
+collectEdgeNormals face collectedNormals =
     case face.vertexIndices of
         first :: _ ->
-            collectEdgeNormalsHelp  face.normal first face.vertexIndices collectedNormals
+            collectEdgeNormalsHelp face.normal first face.vertexIndices collectedNormals
 
         [] ->
             collectedNormals
 
+
 collectEdgeNormalsHelp : Vec3 -> Int -> List Int -> CollectedNormals -> CollectedNormals
-collectEdgeNormalsHelp normal firstIndex remainingVertexIndices collectedNormals = 
+collectEdgeNormalsHelp normal firstIndex remainingVertexIndices collectedNormals =
     case remainingVertexIndices of
         index1 :: index2 :: rest ->
             collectEdgeNormalsHelp normal firstIndex (index2 :: rest) (addNormal normal index1 index2 collectedNormals)
@@ -76,38 +79,42 @@ collectEdgeNormalsHelp normal firstIndex remainingVertexIndices collectedNormals
 addNormal : Vec3 -> Int -> Int -> CollectedNormals -> CollectedNormals
 addNormal normal startIndex endIndex collectedNormals =
     if startIndex < endIndex then
-        { collectedNormals |
-            leftNormals = Dict.insert ( startIndex, endIndex ) normal collectedNormals.leftNormals
+        { collectedNormals
+            | leftNormals = Dict.insert ( startIndex, endIndex ) normal collectedNormals.leftNormals
         }
 
     else
-        { collectedNormals |
-            rightNormals = Dict.insert ( endIndex, startIndex ) normal collectedNormals.rightNormals
+        { collectedNormals
+            | rightNormals = Dict.insert ( endIndex, startIndex ) normal collectedNormals.rightNormals
         }
+
 
 meshEdges : Array Vec3 -> List Face -> List Edge
 meshEdges vertices faces =
     let
-        { leftNormals, rightNormals } = List.foldl 
-            collectEdgeNormals 
-            {leftNormals = Dict.empty, rightNormals = Dict.empty}
-            faces
-         
+        { leftNormals, rightNormals } =
+            List.foldl
+                collectEdgeNormals
+                { leftNormals = Dict.empty, rightNormals = Dict.empty }
+                faces
     in
     Dict.merge
         (\_ _ -> identity)
-        (\(startIndex, endIndex) leftNormal rightNormal currentEdges ->  
+        (\( startIndex, endIndex ) leftNormal rightNormal currentEdges ->
             case Array.get startIndex vertices of
                 Just start ->
                     case Array.get endIndex vertices of
                         Just end ->
                             { start = start
-                            , end = end 
+                            , end = end
                             , leftNormal = leftNormal
-                            , rightNormal = rightNormal 
-                            } :: currentEdges
+                            , rightNormal = rightNormal
+                            }
+                                :: currentEdges
+
                         Nothing ->
                             currentEdges
+
                 Nothing ->
                     currentEdges
         )
@@ -117,12 +124,17 @@ meshEdges vertices faces =
         []
 
 
-boxVertices : { x: Float, y: Float, z: Float } -> Array Vec3
-boxVertices dimensions= 
-    let 
-        x = dimensions.x / 2
-        y = dimensions.y / 2
-        z = dimensions.z / 2
+boxVertices : { x : Float, y : Float, z : Float } -> Array Vec3
+boxVertices dimensions =
+    let
+        x =
+            dimensions.x / 2
+
+        y =
+            dimensions.y / 2
+
+        z =
+            dimensions.z / 2
     in
     Array.fromList
         [ vec3 -x -y -z
@@ -147,41 +159,40 @@ boxFaces =
     ]
 
 
-boxMeshes : { x: Float, y: Float, z: Float } -> { mesh : Mesh Vertex, shadowVolume : Mesh Vertex }
+boxMeshes : { x : Float, y : Float, z : Float } -> { mesh : Mesh Vertex, shadowVolume : Mesh Vertex }
 boxMeshes dimensions =
     let
-        vertices = boxVertices dimensions
+        vertices =
+            boxVertices dimensions
 
-        meshTriangles = 
-            List.foldl 
-                (\{vertexIndices, normal} triangles ->
-                    case List.filterMap (\i -> Array.get i vertices) vertexIndices of 
-                        [p0, p1, p2, p3] ->
-                            ({position = p0, normal = normal}, {position = p1, normal = normal}, {position = p2, normal = normal}) ::
-                            ({position = p2, normal = normal}, {position = p3, normal = normal}, {position = p0, normal = normal}) ::
-                                triangles
+        meshTriangles =
+            List.foldl
+                (\{ vertexIndices, normal } triangles ->
+                    case List.filterMap (\i -> Array.get i vertices) vertexIndices of
+                        [ p0, p1, p2, p3 ] ->
+                            ( { position = p0, normal = normal }, { position = p1, normal = normal }, { position = p2, normal = normal } )
+                                :: ( { position = p2, normal = normal }, { position = p3, normal = normal }, { position = p0, normal = normal } )
+                                :: triangles
 
-                        _ -> 
+                        _ ->
                             triangles
-                
                 )
                 []
                 boxFaces
 
         shadowVolumeTriangles =
-            List.foldl 
-                (\{ start, end, leftNormal, rightNormal } triangles -> 
-                    ({ position = start, normal = rightNormal }, { position = end, normal = rightNormal }, { position = end, normal = leftNormal }) ::
-                    ({ position = end, normal = leftNormal }, { position = start, normal = leftNormal }, { position = start, normal = rightNormal }) ::
-                        triangles
+            List.foldl
+                (\{ start, end, leftNormal, rightNormal } triangles ->
+                    ( { position = start, normal = rightNormal }, { position = end, normal = rightNormal }, { position = end, normal = leftNormal } )
+                        :: ( { position = end, normal = leftNormal }, { position = start, normal = leftNormal }, { position = start, normal = rightNormal } )
+                        :: triangles
                 )
                 []
                 (meshEdges vertices boxFaces)
-
     in
-        { mesh = WebGL.triangles meshTriangles
-        , shadowVolume = WebGL.triangles shadowVolumeTriangles
-        }
+    { mesh = WebGL.triangles meshTriangles
+    , shadowVolume = WebGL.triangles shadowVolumeTriangles
+    }
 
 
 type Msg
@@ -210,7 +221,9 @@ main =
         }
 
 
+
 -- VIEW
+
 
 cubeMeshes : { mesh : Mesh Vertex, shadowVolume : Mesh Vertex }
 cubeMeshes =
@@ -226,7 +239,7 @@ view { width, height } =
         , Attributes.style "left" "0"
         , Attributes.style "top" "0"
         ]
-        [ WebGL.entityWith 
+        [ WebGL.entityWith
             [ DepthTest.default, Settings.cullFace Settings.back ]
             vertexShader
             fragmentShader
@@ -236,7 +249,7 @@ view { width, height } =
             , lightPosition = vec3 -4 -4 8
             , transform = Mat4.identity
             }
-        , WebGL.entityWith 
+        , WebGL.entityWith
             [ DepthTest.default, Settings.cullFace Settings.back ]
             shadowVolumeVertexShader
             shadowVolumeFragmentShader
@@ -246,7 +259,7 @@ view { width, height } =
             , lightPosition = vec3 -4 -4 8
             , transform = Mat4.identity
             }
-        , WebGL.entityWith 
+        , WebGL.entityWith
             [ DepthTest.default, Settings.cullFace Settings.back ]
             vertexShader
             fragmentShader
@@ -267,13 +280,15 @@ type alias Uniforms =
     { perspective : Mat4
     , camera : Mat4
     , transform : Mat4
-    , lightPosition: Vec3
+    , lightPosition : Vec3
     }
+
 
 type alias Varyings =
     { vposition : Vec3
     , vnormal : Vec3
     }
+
 
 vertexShader : Shader Vertex Uniforms Varyings
 vertexShader =
@@ -317,7 +332,6 @@ fragmentShader =
         }
 
     |]
-
 
 
 shadowVolumeVertexShader : Shader Vertex Uniforms Varyings
@@ -373,5 +387,3 @@ shadowVolumeFragmentShader =
         }
 
     |]
-
-
