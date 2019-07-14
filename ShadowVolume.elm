@@ -1,4 +1,4 @@
-module ShadowVolume exposing (boxFaces, boxVertices, main, meshEdges)
+module ShadowVolume exposing (main)
 
 {-
    Rendering shadows using the Shadow Volume technique:
@@ -8,7 +8,7 @@ module ShadowVolume exposing (boxFaces, boxVertices, main, meshEdges)
 import Array exposing (Array)
 import Browser
 import Browser.Dom exposing (getViewport)
-import Browser.Events exposing (onResize)
+import Browser.Events exposing (onAnimationFrameDelta, onResize)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes as Attributes exposing (style)
@@ -17,12 +17,15 @@ import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Task
 import WebGL exposing (Mesh, Shader)
 import WebGL.Settings as Settings
+import WebGL.Settings.Blend as Blend
 import WebGL.Settings.DepthTest as DepthTest
+import WebGL.Settings.StencilTest as StencilTest
 
 
 type alias Model =
     { width : Float
     , height : Float
+    , elapsedTime : Float
     }
 
 
@@ -159,6 +162,27 @@ boxFaces =
     ]
 
 
+planeMesh : Mesh Vertex
+planeMesh =
+    let
+        normal =
+            vec3 0 0 1
+
+        size =
+            10
+    in
+    WebGL.triangles
+        [ ( { position = vec3 -size -size 0, normal = normal }
+          , { position = vec3 size -size 0, normal = normal }
+          , { position = vec3 size size 0, normal = normal }
+          )
+        , ( { position = vec3 size size 0, normal = normal }
+          , { position = vec3 -size size 0, normal = normal }
+          , { position = vec3 -size -size 0, normal = normal }
+          )
+        ]
+
+
 boxMeshes : { x : Float, y : Float, z : Float } -> { mesh : Mesh Vertex, shadowVolume : Mesh Vertex }
 boxMeshes dimensions =
     let
@@ -197,6 +221,7 @@ boxMeshes dimensions =
 
 type Msg
     = Resize Float Float
+    | Tick Float
 
 
 main : Program () Model Msg
@@ -204,21 +229,35 @@ main =
     Browser.element
         { init =
             \_ ->
-                ( { width = 0, height = 0 }
+                ( { width = 0, height = 0, elapsedTime = 0 }
                 , Task.perform
                     (\{ viewport } ->
                         Resize viewport.width viewport.height
                     )
                     getViewport
                 )
-        , subscriptions = \_ -> onResize (\w h -> Resize (toFloat w) (toFloat h))
-        , update =
-            \(Resize width height) model ->
-                ( { model | width = width, height = height }
-                , Cmd.none
-                )
+        , subscriptions = subscriptions
+        , update = update
         , view = view
         }
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update message model =
+    case message of
+        Resize width height ->
+            ( { model | width = width, height = height }, Cmd.none )
+
+        Tick milliseconds ->
+            ( { model | elapsedTime = model.elapsedTime + milliseconds / 1000 }, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.batch
+        [ onResize (\w h -> Resize (toFloat w) (toFloat h))
+        , onAnimationFrameDelta Tick
+        ]
 
 
 
@@ -230,45 +269,125 @@ cubeMeshes =
     boxMeshes { x = 2, y = 2, z = 2 }
 
 
+dotMesh : Mesh Vertex
+dotMesh =
+    (boxMeshes { x = 0.2, y = 0.2, z = 0.2 }).mesh
+
+
 view : Model -> Html Msg
-view { width, height } =
-    WebGL.toHtml
+view { width, height, elapsedTime } =
+    let
+        lightPosition =
+            vec3 -2 -2 4
+
+        uniforms transform =
+            { perspective = Mat4.makePerspective 45 (width / height) 1 1000
+            , camera = Mat4.makeLookAt (vec3 0 -8 8) (vec3 0 0 0) Vec3.k
+            , lightPosition = lightPosition
+            , transform = transform
+            }
+
+        firstBoxPosition =
+            Mat4.makeRotate (degrees 30 * elapsedTime) (vec3 1 1 1)
+
+        planePosition =
+            Mat4.makeTranslate3 0 0 -5
+    in
+    WebGL.toHtmlWith
+        [ WebGL.alpha True
+        , WebGL.antialias
+        , WebGL.depth 1
+        , WebGL.stencil 0
+        ]
         [ Attributes.width (round width)
         , Attributes.height (round height)
         , Attributes.style "position" "absolute"
         , Attributes.style "left" "0"
         , Attributes.style "top" "0"
         ]
-        [ WebGL.entityWith
+        [ -- Ambient:
+          WebGL.entityWith
             [ DepthTest.default, Settings.cullFace Settings.back ]
             vertexShader
-            fragmentShader
+            ambientFragmentShader
             cubeMeshes.mesh
-            { perspective = Mat4.makePerspective 45 (width / height) 1 1000
-            , camera = Mat4.makeLookAt (vec3 0 -4 4) (vec3 0 0 0) Vec3.k
-            , lightPosition = vec3 -4 -4 8
-            , transform = Mat4.identity
-            }
+            (uniforms firstBoxPosition)
         , WebGL.entityWith
             [ DepthTest.default, Settings.cullFace Settings.back ]
+            vertexShader
+            ambientFragmentShader
+            planeMesh
+            (uniforms planePosition)
+
+        -- Shadow volume:
+        , WebGL.entityWith
+            [ DepthTest.less { write = False, near = 0, far = 1 }
+            , Settings.colorMask False False False False
+            , StencilTest.testSeparate
+                { ref = 1
+                , mask = 0xFF
+                , writeMask = 0xFF
+                }
+                { test = StencilTest.always
+                , fail = StencilTest.keep
+                , zfail = StencilTest.keep
+                , zpass = StencilTest.incrementWrap
+                }
+                { test = StencilTest.always
+                , fail = StencilTest.keep
+                , zfail = StencilTest.keep
+                , zpass = StencilTest.decrementWrap
+                }
+            ]
             shadowVolumeVertexShader
             shadowVolumeFragmentShader
             cubeMeshes.shadowVolume
-            { perspective = Mat4.makePerspective 45 (width / height) 1 1000
-            , camera = Mat4.makeLookAt (vec3 0 -4 4) (vec3 0 0 0) Vec3.k
-            , lightPosition = vec3 -4 -4 8
-            , transform = Mat4.identity
-            }
+            (uniforms firstBoxPosition)
+
+        -- Diffuse:
         , WebGL.entityWith
-            [ DepthTest.default, Settings.cullFace Settings.back ]
+            [ DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
+            , StencilTest.test
+                { ref = 0
+                , mask = 0xFF
+                , test = StencilTest.equal
+                , fail = StencilTest.keep
+                , zfail = StencilTest.keep
+                , zpass = StencilTest.keep
+                , writeMask = 0x00
+                }
+            , Settings.cullFace Settings.back
+            , Blend.add Blend.one Blend.one
+            ]
             vertexShader
-            fragmentShader
+            diffuseFragmentShader
             cubeMeshes.mesh
-            { perspective = Mat4.makePerspective 45 (width / height) 1 1000
-            , camera = Mat4.makeLookAt (vec3 0 -4 4) (vec3 0 0 0) Vec3.k
-            , lightPosition = vec3 -4 -4 8
-            , transform = Mat4.makeTranslate3 0.5 0.5 -0.5
-            }
+            (uniforms firstBoxPosition)
+        , WebGL.entityWith
+            [ DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
+            , StencilTest.test
+                { ref = 0
+                , mask = 0xFF
+                , test = StencilTest.equal
+                , fail = StencilTest.keep
+                , zfail = StencilTest.keep
+                , zpass = StencilTest.keep
+                , writeMask = 0x00
+                }
+            , Settings.cullFace Settings.back
+            , Blend.add Blend.one Blend.one
+            ]
+            vertexShader
+            diffuseFragmentShader
+            planeMesh
+            (uniforms planePosition)
+        , -- Light
+          WebGL.entityWith
+            []
+            vertexShader
+            ambientFragmentShader
+            dotMesh
+            (uniforms (Mat4.makeTranslate lightPosition))
         ]
 
 
@@ -313,8 +432,8 @@ vertexShader =
     |]
 
 
-fragmentShader : Shader {} Uniforms Varyings
-fragmentShader =
+ambientFragmentShader : Shader {} Uniforms Varyings
+ambientFragmentShader =
     [glsl|
 
         precision mediump float;
@@ -324,10 +443,26 @@ fragmentShader =
 
         void main () {    
           float ambientLight = 0.4;
+          float intensity = ambientLight;
+          gl_FragColor = vec4(intensity, 0.0, 0.0, 1.0);
+        }
+
+    |]
+
+
+diffuseFragmentShader : Shader {} Uniforms Varyings
+diffuseFragmentShader =
+    [glsl|
+
+        precision mediump float;
+        varying vec3 vposition;
+        varying vec3 vnormal;
+        uniform vec3 lightPosition;
+
+        void main () {    
           float directionalLight = 0.6;
           float directional = max(dot(normalize(lightPosition - vposition), vnormal), 0.0);
-          float intensity = ambientLight + directional * directionalLight;
-
+          float intensity = directional * directionalLight;
           gl_FragColor = vec4(intensity, 0.0, 0.0, 1.0);
         }
 
@@ -354,10 +489,10 @@ shadowVolumeVertexShader =
 
           vec3 directionToLight = normalize(lightPosition - transformedPosition);
           vec3 offset = vec3(0.0, 0.0, 0.0);
-          if (dot(directionToLight, normal) > 0.0) {
+          if (dot(directionToLight, transformedNormal) > 0.0) {
             offset = vec3(0.0, 0.0, 0.0);
           } else {
-            offset = -1.0 * directionToLight;
+            offset = -100.0 * directionToLight;
           }
           vec3 offsetPosition = transformedPosition + offset;
           gl_Position = perspective * camera * vec4(offsetPosition, 1.0);
