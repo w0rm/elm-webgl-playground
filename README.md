@@ -1,5 +1,11 @@
 # elm-webgl-playground
 
+## shadowvolume.elm
+
+Real-time shadows using the shadow volume technique.
+
+[![Demo](screenshots/shadowvolume.png)](https://unsoundscapes.com/elm-webgl-playground/shadowvolume.html)
+
 ## osloelmday.elm
 
 A demo similar to Oslo Elm Day 2019, but implemented in Elm instead of Three.js.

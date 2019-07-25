@@ -14,7 +14,7 @@ import Html exposing (Html)
 import Html.Attributes as Attributes exposing (style)
 import Json.Decode as Decode exposing (Decoder)
 import Math.Matrix4 as Mat4 exposing (Mat4)
-import Math.Vector2 as Vec2 exposing (Vec2, vec2)
+import Math.Vector2 exposing (Vec2, vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Task
 import WebGL exposing (Mesh, Shader)
@@ -712,7 +712,7 @@ vertexShader =
         uniform mat4 perspective;
         uniform mat4 camera;
         uniform mat4 transform;
-        
+
         void main () {
           vec4 transformedPosition = transform * vec4(position, 1.0);
           vec4 transformedNormal = transform * vec4(normal, 0.0);
@@ -733,7 +733,7 @@ ambientFragmentShader =
         varying vec3 vnormal;
         uniform vec3 lightPosition;
 
-        void main () {    
+        void main () {
           float ambientLight = 0.5;
           float intensity = ambientLight;
           gl_FragColor = vec4(intensity, 0.0, 0.0, 1.0);
@@ -751,7 +751,7 @@ diffuseFragmentShader =
         varying vec3 vnormal;
         uniform vec3 lightPosition;
 
-        void main () {    
+        void main () {
           float directionalLight = 0.3;
           float directional = max(dot(normalize(lightPosition - vposition), vnormal), 0.0);
           float intensity = directional * directionalLight;
@@ -774,7 +774,7 @@ shadowVolumeVertexShader =
         uniform mat4 camera;
         uniform vec3 lightPosition;
         uniform mat4 transform;
-        
+
         void main () {
           vec3 transformedPosition = (transform * vec4(position, 1.0)).xyz;
           vec3 transformedNormal = (transform * vec4(normal, 0.0)).xyz;
@@ -804,7 +804,7 @@ shadowVolumeFragmentShader =
         varying vec3 vnormal;
         uniform vec3 lightPosition;
 
-        void main () {    
+        void main () {
           float ambientLight = 0.4;
           float directionalLight = 0.6;
           float directional = max(dot(normalize(lightPosition - vposition), vnormal), 0.0);

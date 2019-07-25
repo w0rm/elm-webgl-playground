@@ -6,7 +6,7 @@ rm -rf gh-pages || exit 0;
 mkdir -p gh-pages
 
 # compile JS using Elm
-for i in animation2d circle copter3d css3d planet3d shadertoy tangram osloelmday; do
+for i in animation2d circle copter3d css3d planet3d shadertoy tangram osloelmday shadowvolume; do
   elm make $i.elm --optimize --output gh-pages/$i.html
 done
 
