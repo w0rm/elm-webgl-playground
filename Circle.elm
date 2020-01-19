@@ -30,7 +30,7 @@ main =
 view : Float -> Html msg
 view t =
     WebGL.toHtml
-        [ width 800
+        [ width 400
         , height 400
         , style "display" "block"
         ]
@@ -39,7 +39,7 @@ view t =
             fragmentShader
             mesh
             { transform =
-                Mat4.makeRotate (t / 100) (vec3 0 0 1)
+                Mat4.makeRotate (t / 1000) (vec3 0 0 1)
             }
         ]
 
