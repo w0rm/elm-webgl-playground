@@ -6,12 +6,12 @@ rm -rf gh-pages || exit 0;
 mkdir -p gh-pages
 
 # compile JS using Elm
-for i in animation2d circle copter3d css3d planet3d shadertoy tangram osloelmday shadowvolume; do
+for i in animation2d circle copter3d css3d planet3d shadertoy tangram osloelmday shadowvolume elm3dgamejam; do
   elm make $i.elm --optimize --output gh-pages/$i.html
 done
 
-# copy the texture
-cp animation2d.png gh-pages/
+# copy the texture and mesh
+cp 3d.obj.txt animation2d.png gh-pages/
 
 # init branch and commit
 cd gh-pages

@@ -1,4 +1,4 @@
-module CSS3D exposing (main)
+module CSS3d exposing (main)
 
 import Browser
 import Browser.Dom exposing (getViewport)

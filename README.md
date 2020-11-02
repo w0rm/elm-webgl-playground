@@ -1,5 +1,16 @@
 # elm-webgl-playground
 
+## elm3dgamejam.elm
+
+[![Demo](screenshots/elm3dgamejam.png)](http://unsoundscapes.com/elm-webgl-playground/elm3dgamejam.html)
+
+[Elm Game Jam #5](https://itch.io/jam/elm-game-jam-5) logo rendering, designed by @kuzminadya. Uses:
+
+* [elm-obj-file](https://package.elm-lang.org/packages/w0rm/elm-obj-file/latest]/) to load the "3D" mesh, that was created in Blender
+* [one-true-path-experiment](https://package.elm-lang.org/packages/folkertdev/one-true-path-experiment/latest/) to parse the SVG path and [elm-geometry](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/) and
+[elm-triangular-mesh](https://package.elm-lang.org/packages/ianmackenzie/elm-triangular-mesh/latest/) to generate the tube-shaped mesh of the lettering
+* Rendered with [elm-3d-scene](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-scene/latest/)
+
 ## shadowvolume.elm
 
 Real-time shadows using the shadow volume technique.
