@@ -4,7 +4,7 @@
 
 [![Demo](screenshots/elm3dgamejam.png)](http://unsoundscapes.com/elm-webgl-playground/elm3dgamejam.html)
 
-[Elm Game Jam #5](https://itch.io/jam/elm-game-jam-5) logo rendering, designed by @kuzminadya. Uses:
+[Elm Game Jam #5](https://itch.io/jam/elm-game-jam-5) logo rendering, designed by [@kuzminadya](https://github.com/kuzminadya). Uses:
 
 * [elm-obj-file](https://package.elm-lang.org/packages/w0rm/elm-obj-file/latest]/) to load the "3D" mesh, that was created in Blender
 * [one-true-path-experiment](https://package.elm-lang.org/packages/folkertdev/one-true-path-experiment/latest/) to parse the SVG path and [elm-geometry](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/) and
